@@ -17,7 +17,9 @@ def is_admin() -> bool:
 
 def run(cmd: list[str]) -> subprocess.CompletedProcess:
     """Chạy lệnh console Windows (net, auditpol...). Output dùng bảng mã OEM."""
-    return subprocess.run(cmd, capture_output=True, text=True, encoding="oem", errors="replace")
+    # stdin=DEVNULL: lệnh nào hỏi xác nhận sẽ nhận EOF thay vì treo chờ bàn phím
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="oem", errors="replace",
+                          stdin=subprocess.DEVNULL)
 
 
 def powershell_json(expr: str):

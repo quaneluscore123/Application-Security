@@ -46,7 +46,9 @@ def _try_logon(password: str) -> int:
 def setup() -> None:
     if _user_exists():
         return
-    password = secrets.token_urlsafe(16) + "Aa1!"  # không lưu lại, không cần dùng tới
+    # Tối đa 14 ký tự: dài hơn thì `net user` hỏi xác nhận (Y/N) và bị treo.
+    # Không lưu lại, không cần dùng tới.
+    password = secrets.token_urlsafe(8)[:10] + "Aa1!"
     r = run(["net", "user", USER, password, "/add", "/comment:WinGuard simulator - safe to delete"])
     if r.returncode != 0:
         raise RuntimeError(f"Không tạo được {USER}: {r.stderr.strip() or r.stdout.strip()}")
