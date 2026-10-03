@@ -38,7 +38,8 @@ collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.
   eventlog.py  Security Event Log      bruteforce.py         điểm /100     console + HTML
   config.py    net accounts, firewall, config_audit.py
                Defender, UAC, tài      accounts.py (Event Log + so sánh baseline)
-               khoản, nhóm Admin
+               khoản, nhóm Admin       persistence.py (Run key, Scheduled Task)
+  persistence.py  Run key, Scheduled Task
 ```
 
 ## Kịch bản mô phỏng
@@ -48,8 +49,8 @@ collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.
 | 1 | Brute Force | T1110 | Đăng nhập sai vào `sim_testuser` | Event 4625 vượt ngưỡng; 4740 | Account lockout, mật khẩu mạnh | ✅ Xong |
 | 2 | Tạo tài khoản | T1136 | Tạo `sim_user` | Event 4720 + so sánh baseline | Giám sát tài khoản | ✅ Xong |
 | 3 | Thêm vào nhóm Admin | T1098 | Thêm `sim_user` vào Administrators | Event 4732 + so sánh baseline | Quyền tối thiểu, UAC | ✅ Xong |
-| 4 | Run key | T1547.001 | Run key mở Notepad | So sánh baseline | Rà soát Autoruns | ⏳ |
-| 5 | Scheduled Task | T1053.005 | Task `SIM_` mở Notepad | So sánh baseline | Giám sát Task Scheduler | ⏳ |
+| 4 | Run key | T1547.001 | Run key `SIM_WinGuard` mở Notepad | So sánh baseline | Rà soát Autoruns | ✅ Xong |
+| 5 | Scheduled Task | T1053.005 | Task `SIM_WinGuardTest` mở Notepad | Event 4698 + so sánh baseline | Giám sát Task Scheduler | ✅ Xong |
 | 6 | File độc hại | T1204 | File thử EICAR | Defender Event 1116 | Real-time protection | ⏳ |
 | 7 | Cổng lạ | T1571 | `http.server` cổng 4444 | Module mạng | Firewall inbound rule | ⏳ |
 | 8 | Tắt tường lửa | T1562.004 | Tắt 30 giây rồi bật lại | Module cấu hình | Giám sát cấu hình | ⏳ |
@@ -58,7 +59,7 @@ collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.
 
 - [x] **Giai đoạn 1:** khung dự án, module cấu hình, kịch bản 1 (Brute Force) trọn vòng, báo cáo HTML
 - [x] **Giai đoạn 2:** kịch bản 2–3 (tài khoản, nhóm Admin – Event 4720/4732)
-- [ ] **Giai đoạn 3:** kịch bản 4–5 (persistence: Run key, Scheduled Task, so sánh baseline)
+- [x] **Giai đoạn 3:** kịch bản 4–5 (persistence: Run key, Scheduled Task, so sánh baseline)
 - [ ] **Giai đoạn 4:** kịch bản 6–8 (Defender, cổng mạng với `psutil`, tường lửa)
 - [ ] **Giai đoạn 5:** thử nghiệm trọn vòng, đo tỷ lệ phát hiện, viết báo cáo và slide, tập demo
 

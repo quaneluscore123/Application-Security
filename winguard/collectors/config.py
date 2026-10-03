@@ -1,6 +1,7 @@
 """Thu thập cấu hình bảo mật của máy (chỉ đọc, không thay đổi gì)."""
 import winreg
 
+from winguard.collectors import persistence
 from winguard.utils import powershell_json, run
 
 
@@ -75,4 +76,6 @@ def collect() -> dict:
         "uac_enabled": uac_enabled(),
         "local_users": local_users(),
         "admin_members": admin_members(),
+        "run_keys": persistence.run_keys(),
+        "scheduled_tasks": persistence.scheduled_tasks(),
     }

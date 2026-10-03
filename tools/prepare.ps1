@@ -2,7 +2,7 @@
 #   powershell -ExecutionPolicy Bypass -File tools\prepare.ps1
 # - Tạo System Restore Point
 # - Sao lưu cấu hình audit + chính sách tài khoản vào data\
-# - Bật audit cần thiết để Windows ghi Event 4624/4625/4720/4732/4740
+# - Bật audit cần thiết để Windows ghi Event 4624/4625/4698/4720/4732/4740
 
 $ErrorActionPreference = "Stop"
 if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
@@ -43,6 +43,7 @@ $subcategories = @{
     "Account Lockout"           = "{0CCE9217-69AE-11D9-BED3-505054503030}"
     "User Account Management"   = "{0CCE9235-69AE-11D9-BED3-505054503030}"
     "Security Group Management" = "{0CCE9237-69AE-11D9-BED3-505054503030}"
+    "Other Object Access Events" = "{0CCE9227-69AE-11D9-BED3-505054503030}"  # Event 4698 (tạo task)
 }
 foreach ($name in $subcategories.Keys) {
     auditpol /set /subcategory:"$($subcategories[$name])" /success:enable /failure:enable | Out-Null

@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 
 from winguard import reporter, scoring
 from winguard.collectors import config, eventlog
-from winguard.detectors import accounts, bruteforce, config_audit
+from winguard.detectors import accounts, bruteforce, config_audit, persistence
 from winguard.utils import is_admin, load_json, save_json
 
 EVENT_IDS = [bruteforce.FAILED_LOGON, bruteforce.ACCOUNT_LOCKED,
-             accounts.ACCOUNT_CREATED, accounts.MEMBER_ADDED]
+             accounts.ACCOUNT_CREATED, accounts.MEMBER_ADDED, persistence.TASK_CREATED]
 
 
 def scan_start(hours: int | None) -> datetime:
@@ -43,7 +43,9 @@ def analyze(hours: int | None, include_events: bool = True):
     baseline = load_json("baseline.json")
     alerts += bruteforce.detect(events)
     # So sánh baseline vẫn chạy khi không có quyền Admin / log bị xóa
-    alerts += accounts.detect(events, cfg, baseline["config"] if baseline else None)
+    baseline_cfg = baseline["config"] if baseline else None
+    alerts += accounts.detect(events, cfg, baseline_cfg)
+    alerts += persistence.detect(events, cfg, baseline_cfg)
     return cfg, alerts
 
 
