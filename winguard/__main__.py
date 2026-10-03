@@ -27,9 +27,11 @@ def scan_start(hours: int | None) -> datetime:
     return datetime.now() - timedelta(hours=hours)
 
 
-def analyze(hours: int | None):
+def analyze(hours: int | None, include_events: bool = True):
     cfg = config.collect()
     alerts = config_audit.detect(cfg)
+    if not include_events:
+        return cfg, alerts
     if is_admin():
         since = scan_start(hours)
         print(f"Đọc Security Event Log từ {since:%Y-%m-%d %H:%M:%S}")
@@ -49,7 +51,8 @@ def main() -> None:
                         help="số giờ log cần quét (mặc định: từ lần chạy simulator gần nhất, hoặc 1 giờ)")
     args = parser.parse_args()
 
-    cfg, alerts = analyze(args.hours)
+    # Baseline chỉ đo cấu hình; sự kiện tấn công cũ không được tính vào trạng thái "bình thường"
+    cfg, alerts = analyze(args.hours, include_events=args.scan)
     score = scoring.score(alerts)
 
     if args.baseline:

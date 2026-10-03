@@ -44,8 +44,8 @@ def _try_logon(password: str) -> int:
 
 
 def setup() -> None:
-    if _user_exists():
-        return
+    # Luôn tạo lại tài khoản để bộ đếm đăng nhập sai về 0 -> mỗi lượt mô phỏng độc lập
+    cleanup()
     # Tối đa 14 ký tự: dài hơn thì `net user` hỏi xác nhận (Y/N) và bị treo.
     # Không lưu lại, không cần dùng tới.
     password = secrets.token_urlsafe(8)[:10] + "Aa1!"
