@@ -51,17 +51,20 @@ collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.
 | 3 | Thêm vào nhóm Admin | T1098 | Thêm `sim_user` vào Administrators | Event 4732 + so sánh baseline | Quyền tối thiểu, UAC | ✅ Xong |
 | 4 | Run key | T1547.001 | Run key `SIM_WinGuard` mở Notepad | So sánh baseline | Rà soát Autoruns | ✅ Xong |
 | 5 | Scheduled Task | T1053.005 | Task `SIM_WinGuardTest` mở Notepad | Event 4698 + so sánh baseline | Giám sát Task Scheduler | ✅ Xong |
-| 6 | File độc hại | T1204 | File thử EICAR | Defender Event 1116 | Real-time protection | ⏳ |
-| 7 | Cổng lạ | T1571 | `http.server` cổng 4444 | Module mạng | Firewall inbound rule | ⏳ |
-| 8 | Tắt tường lửa | T1562.004 | Tắt 30 giây rồi bật lại | Module cấu hình | Giám sát cấu hình | ⏳ |
+Ngoài ra, WinGuard đánh giá cấu hình (chính sách mật khẩu, khóa tài khoản, tường lửa, Defender, UAC) ở mọi lần quét.
 
 ## Kế hoạch
 
 - [x] **Giai đoạn 1:** khung dự án, module cấu hình, kịch bản 1 (Brute Force) trọn vòng, báo cáo HTML
 - [x] **Giai đoạn 2:** kịch bản 2–3 (tài khoản, nhóm Admin – Event 4720/4732)
 - [x] **Giai đoạn 3:** kịch bản 4–5 (persistence: Run key, Scheduled Task, so sánh baseline)
-- [ ] **Giai đoạn 4:** kịch bản 6–8 (Defender, cổng mạng với `psutil`, tường lửa)
-- [ ] **Giai đoạn 5:** thử nghiệm trọn vòng, đo tỷ lệ phát hiện, viết báo cáo và slide, tập demo
+- [ ] **Giai đoạn 4:** thử nghiệm trọn vòng, viết báo cáo và slide, tập demo
+
+## Hướng phát triển
+
+- Đọc thêm log của Microsoft Defender và Windows Firewall
+- Giám sát cổng mạng đang lắng nghe so với baseline
+- Gửi log về hệ thống SIEM (ví dụ Wazuh) để giám sát nhiều máy
 
 ## Yêu cầu
 
