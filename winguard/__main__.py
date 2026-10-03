@@ -10,10 +10,11 @@ from datetime import datetime, timedelta
 
 from winguard import reporter, scoring
 from winguard.collectors import config, eventlog
-from winguard.detectors import bruteforce, config_audit
+from winguard.detectors import accounts, bruteforce, config_audit
 from winguard.utils import is_admin, load_json, save_json
 
-EVENT_IDS = [bruteforce.FAILED_LOGON, bruteforce.ACCOUNT_LOCKED]
+EVENT_IDS = [bruteforce.FAILED_LOGON, bruteforce.ACCOUNT_LOCKED,
+             accounts.ACCOUNT_CREATED, accounts.MEMBER_ADDED]
 
 
 def scan_start(hours: int | None) -> datetime:
@@ -32,12 +33,17 @@ def analyze(hours: int | None, include_events: bool = True):
     alerts = config_audit.detect(cfg)
     if not include_events:
         return cfg, alerts
+    events = []
     if is_admin():
         since = scan_start(hours)
         print(f"Đọc Security Event Log từ {since:%Y-%m-%d %H:%M:%S}")
-        alerts += bruteforce.detect(eventlog.query_security(EVENT_IDS, since))
+        events = eventlog.query_security(EVENT_IDS, since)
     else:
         print("[CẢNH BÁO] Không chạy bằng quyền Admin -> bỏ qua Security Event Log.", file=sys.stderr)
+    baseline = load_json("baseline.json")
+    alerts += bruteforce.detect(events)
+    # So sánh baseline vẫn chạy khi không có quyền Admin / log bị xóa
+    alerts += accounts.detect(events, cfg, baseline["config"] if baseline else None)
     return cfg, alerts
 
 

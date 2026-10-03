@@ -10,7 +10,7 @@ import ctypes
 import secrets
 from ctypes import wintypes
 
-from winguard.utils import run
+from simulator.scenarios._common import create_user, delete_user
 
 NAME = "bruteforce"
 DESCRIPTION = "Đăng nhập sai nhiều lần vào tài khoản thử nghiệm sim_testuser (T1110)"
@@ -29,10 +29,6 @@ _LogonUserW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.LPCWSTR,
 _LogonUserW.restype = wintypes.BOOL
 
 
-def _user_exists() -> bool:
-    return run(["net", "user", USER]).returncode == 0
-
-
 def _try_logon(password: str) -> int:
     """Trả về 0 nếu đăng nhập thành công, ngược lại là mã lỗi Win32."""
     token = wintypes.HANDLE()
@@ -43,20 +39,9 @@ def _try_logon(password: str) -> int:
     return ctypes.get_last_error()
 
 
-def setup() -> None:
+def run_scenario(attempts: int = 6, **_) -> dict:
     # Luôn tạo lại tài khoản để bộ đếm đăng nhập sai về 0 -> mỗi lượt mô phỏng độc lập
-    cleanup()
-    # Tối đa 14 ký tự: dài hơn thì `net user` hỏi xác nhận (Y/N) và bị treo.
-    # Không lưu lại, không cần dùng tới.
-    password = secrets.token_urlsafe(8)[:10] + "Aa1!"
-    r = run(["net", "user", USER, password, "/add", "/comment:WinGuard simulator - safe to delete"])
-    if r.returncode != 0:
-        raise RuntimeError(f"Không tạo được {USER}: {r.stderr.strip() or r.stdout.strip()}")
-    print(f"  + Đã tạo tài khoản thử nghiệm {USER}")
-
-
-def run_scenario(attempts: int = 6) -> dict:
-    setup()
+    create_user(USER)
     results = []
     for i in range(1, attempts + 1):
         code = _try_logon("wrong-" + secrets.token_hex(4))
@@ -71,6 +56,4 @@ def run_scenario(attempts: int = 6) -> dict:
 
 
 def cleanup() -> None:
-    if _user_exists():
-        run(["net", "user", USER, "/delete"])
-        print(f"  - Đã xóa tài khoản {USER}")
+    delete_user(USER)

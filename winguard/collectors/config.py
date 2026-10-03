@@ -44,10 +44,35 @@ def uac_enabled() -> bool | None:
         return None
 
 
+ADMINS_SID = "S-1-5-32-544"  # nhóm Administrators, cố định trên mọi ngôn ngữ Windows
+
+
+def local_users() -> list[dict]:
+    return powershell_json(
+        "@(Get-CimInstance Win32_UserAccount -Filter 'LocalAccount=True' | Select-Object Name,SID,Disabled)"
+    ) or []
+
+
+def admin_members() -> list[dict]:
+    """Thành viên nhóm Administrators (Name, SID). Tìm nhóm theo SID để không phụ thuộc ngôn ngữ."""
+    # Phải là MỘT biểu thức (powershell_json gán `$r = ...`).
+    # [char]92 = '\' (ký tự '\' và '"' bị hỏng khi truyền qua dòng lệnh Windows)
+    group = (f"(New-Object Security.Principal.SecurityIdentifier '{ADMINS_SID}')"
+             ".Translate([Security.Principal.NTAccount]).Value.Split([char]92)[1]")
+    return powershell_json(
+        f"@(([ADSI]('WinNT://./' + {group} + ',group')).Invoke('Members') | ForEach-Object {{ $t = $_.GetType(); "
+        "[pscustomobject]@{Name = $t.InvokeMember('Name','GetProperty',$null,$_,$null); "
+        "SID = (New-Object Security.Principal.SecurityIdentifier("
+        "$t.InvokeMember('objectSid','GetProperty',$null,$_,$null), 0)).Value} })"
+    ) or []
+
+
 def collect() -> dict:
     return {
         "accounts_policy": net_accounts(),
         "firewall": firewall_profiles(),
         "defender": defender_status(),
         "uac_enabled": uac_enabled(),
+        "local_users": local_users(),
+        "admin_members": admin_members(),
     }

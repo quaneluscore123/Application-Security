@@ -9,10 +9,10 @@ import argparse
 import sys
 from datetime import datetime
 
-from simulator.scenarios import bruteforce
+from simulator.scenarios import admin_group, bruteforce, new_account
 from winguard.utils import is_admin, load_json, save_json
 
-SCENARIOS = {s.NAME: s for s in [bruteforce]}
+SCENARIOS = {s.NAME: s for s in [bruteforce, new_account, admin_group]}
 
 
 def confirm(msg: str, assume_yes: bool) -> bool:
@@ -48,7 +48,7 @@ def main() -> None:
         return
     start = datetime.now()
     print(f"[*] Bắt đầu kịch bản {scenario.NAME}")
-    result = scenario.run_scenario(args.attempts)
+    result = scenario.run_scenario(attempts=args.attempts)
     log = load_json("sim_log.json", [])
     log.append({"scenario": scenario.NAME, "start": start, "end": datetime.now(), "result": result})
     save_json("sim_log.json", log)

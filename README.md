@@ -37,7 +37,8 @@ Chuẩn bị → Baseline → Mô phỏng → Phát hiện → Phòng thủ → 
 collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.py  →  reporter.py
   eventlog.py  Security Event Log      bruteforce.py         điểm /100     console + HTML
   config.py    net accounts, firewall, config_audit.py
-               Defender, UAC
+               Defender, UAC, tài      accounts.py (Event Log + so sánh baseline)
+               khoản, nhóm Admin
 ```
 
 ## Kịch bản mô phỏng
@@ -45,8 +46,8 @@ collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.
 | # | Kịch bản | MITRE ATT&CK | Mô phỏng vô hại | Phát hiện | Phòng thủ | Trạng thái |
 |---|---|---|---|---|---|---|
 | 1 | Brute Force | T1110 | Đăng nhập sai vào `sim_testuser` | Event 4625 vượt ngưỡng; 4740 | Account lockout, mật khẩu mạnh | ✅ Xong |
-| 2 | Tạo tài khoản | T1136 | Tạo `sim_user` | Event 4720 | Giám sát tài khoản | ⏳ |
-| 3 | Thêm vào nhóm Admin | T1098 | Thêm `sim_user` vào Administrators | Event 4732 | Quyền tối thiểu, UAC | ⏳ |
+| 2 | Tạo tài khoản | T1136 | Tạo `sim_user` | Event 4720 + so sánh baseline | Giám sát tài khoản | ✅ Xong |
+| 3 | Thêm vào nhóm Admin | T1098 | Thêm `sim_user` vào Administrators | Event 4732 + so sánh baseline | Quyền tối thiểu, UAC | ✅ Xong |
 | 4 | Run key | T1547.001 | Run key mở Notepad | So sánh baseline | Rà soát Autoruns | ⏳ |
 | 5 | Scheduled Task | T1053.005 | Task `SIM_` mở Notepad | So sánh baseline | Giám sát Task Scheduler | ⏳ |
 | 6 | File độc hại | T1204 | File thử EICAR | Defender Event 1116 | Real-time protection | ⏳ |
@@ -56,7 +57,7 @@ collectors/  (thu thập, chỉ đọc)  →  detectors/ (luật)  →  scoring.
 ## Kế hoạch
 
 - [x] **Giai đoạn 1:** khung dự án, module cấu hình, kịch bản 1 (Brute Force) trọn vòng, báo cáo HTML
-- [ ] **Giai đoạn 2:** kịch bản 2–3 (tài khoản, nhóm Admin – Event 4720/4732)
+- [x] **Giai đoạn 2:** kịch bản 2–3 (tài khoản, nhóm Admin – Event 4720/4732)
 - [ ] **Giai đoạn 3:** kịch bản 4–5 (persistence: Run key, Scheduled Task, so sánh baseline)
 - [ ] **Giai đoạn 4:** kịch bản 6–8 (Defender, cổng mạng với `psutil`, tường lửa)
 - [ ] **Giai đoạn 5:** thử nghiệm trọn vòng, đo tỷ lệ phát hiện, viết báo cáo và slide, tập demo

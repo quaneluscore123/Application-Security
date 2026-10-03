@@ -35,7 +35,17 @@ def powershell_json(expr: str):
     out = r.stdout.strip()
     if r.returncode != 0 or not out:
         return None
-    return json.loads(out)
+    try:
+        return json.loads(out)
+    except json.JSONDecodeError:
+        return None
+
+
+def powershell(script: str) -> subprocess.CompletedProcess:
+    """Chạy lệnh PowerShell để thực hiện thay đổi (không cần kết quả JSON)."""
+    return subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+                          capture_output=True, text=True, encoding="oem", errors="replace",
+                          stdin=subprocess.DEVNULL)
 
 
 def save_json(name: str, obj) -> Path:
