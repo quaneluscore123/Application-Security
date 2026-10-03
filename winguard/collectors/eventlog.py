@@ -25,12 +25,12 @@ def parse_event(xml_str: str) -> dict:
     }
 
 
-def query_security(event_ids: list[int], hours: int = 24) -> list[dict]:
-    """Lấy các sự kiện Security có ID trong event_ids trong `hours` giờ gần nhất."""
+def query_security(event_ids: list[int], since: datetime) -> list[dict]:
+    """Lấy các sự kiện Security có ID trong event_ids kể từ thời điểm `since` (giờ máy)."""
     ids = ",".join(str(i) for i in event_ids)
     expr = (
         f"@(Get-WinEvent -FilterHashtable @{{LogName='Security';Id={ids};"
-        f"StartTime=(Get-Date).AddHours(-{hours})}} -ErrorAction SilentlyContinue "
+        f"StartTime=[datetime]'{since:%Y-%m-%dT%H:%M:%S}'}} -ErrorAction SilentlyContinue "
         "| ForEach-Object { $_.ToXml() })"
     )
     raw = powershell_json(expr) or []
