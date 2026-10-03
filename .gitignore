@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+# Dữ liệu sinh ra khi chạy trên máy cá nhân (log, cấu hình) - không đưa lên GitHub
+data/*
+!data/.gitkeep
