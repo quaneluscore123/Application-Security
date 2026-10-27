@@ -30,23 +30,32 @@ def scan_start(hours: int | None) -> datetime:
     return datetime.now() - timedelta(hours=hours)
 
 
-def analyze(hours: int | None, include_events: bool = True):
+# v1 = bộ luật trước khi vá (chưa có spraying, Event 1102, UNKNOWN, kiểm tra chữ ký baseline)
+# v2 = bộ luật hiện tại. Dùng để so sánh "thử né luật" trên CÙNG một bộ log.
+RULESETS = ("v1", "v2")
+
+
+def analyze(hours: int | None, include_events: bool = True,
+            since: datetime | None = None, rules: str = "v2"):
+    new_rules = rules == "v2"
     cfg = config.collect()
     alerts = config_audit.detect(cfg)
-    alerts += collector_health.detect(cfg)  # collector lỗi -> UNKNOWN (cả baseline lẫn scan)
+    if new_rules:
+        alerts += collector_health.detect(cfg)  # collector lỗi -> UNKNOWN (cả baseline lẫn scan)
     if not include_events:
         return cfg, alerts
     events = []
     if is_admin():
-        since = scan_start(hours)
-        print(f"Đọc Security Event Log từ {since:%Y-%m-%d %H:%M:%S}")
+        since = since or scan_start(hours)
+        print(f"Đọc Security Event Log từ {since:%Y-%m-%d %H:%M:%S} (bộ luật {rules})")
         events = eventlog.query_security(EVENT_IDS, since)
     else:
         print("[CẢNH BÁO] Không chạy bằng quyền Admin -> bỏ qua Security Event Log.", file=sys.stderr)
     baseline = load_json("baseline.json")
-    alerts += bruteforce.detect(events)
-    alerts += evasion.detect(events)
-    alerts += integrity.check(baseline)  # baseline.json có bị sửa không
+    alerts += bruteforce.detect(events, spray=new_rules)
+    if new_rules:
+        alerts += evasion.detect(events)
+        alerts += integrity.check(baseline)  # baseline.json có bị sửa không
     # So sánh baseline vẫn chạy khi không có quyền Admin / log bị xóa
     baseline_cfg = baseline["config"] if baseline else None
     alerts += accounts.detect(events, cfg, baseline_cfg)
@@ -67,10 +76,12 @@ def main() -> None:
     mode.add_argument("--scan", action="store_true", help="quét và xuất báo cáo")
     parser.add_argument("--hours", type=int,
                         help="số giờ log cần quét (mặc định: từ lần chạy simulator gần nhất, hoặc 1 giờ)")
+    parser.add_argument("--rules", choices=RULESETS, default="v2",
+                        help="bộ luật: v1 = trước khi vá, v2 = hiện tại (mặc định)")
     args = parser.parse_args()
 
     # Baseline chỉ đo cấu hình; sự kiện tấn công cũ không được tính vào trạng thái "bình thường"
-    cfg, alerts = analyze(args.hours, include_events=args.scan)
+    cfg, alerts = analyze(args.hours, include_events=args.scan, rules=args.rules)
     score = scoring.score(alerts)
 
     if args.baseline:
