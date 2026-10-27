@@ -8,7 +8,7 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 
-from winguard import reporter, scoring
+from winguard import integrity, reporter, scoring
 from winguard.collectors import config, eventlog
 from winguard.detectors import (accounts, bruteforce, collector_health, config_audit,
                                 evasion, persistence)
@@ -46,11 +46,17 @@ def analyze(hours: int | None, include_events: bool = True):
     baseline = load_json("baseline.json")
     alerts += bruteforce.detect(events)
     alerts += evasion.detect(events)
+    alerts += integrity.check(baseline)  # baseline.json có bị sửa không
     # So sánh baseline vẫn chạy khi không có quyền Admin / log bị xóa
     baseline_cfg = baseline["config"] if baseline else None
     alerts += accounts.detect(events, cfg, baseline_cfg)
     alerts += persistence.detect(events, cfg, baseline_cfg)
     return cfg, alerts
+
+
+def save_baseline(cfg: dict, score: int) -> None:
+    save_json("baseline.json", {"time": datetime.now(), "config": cfg, "score": score,
+                                "signature": integrity.sign(cfg)})
 
 
 def main() -> None:
@@ -68,9 +74,9 @@ def main() -> None:
     score = scoring.score(alerts)
 
     if args.baseline:
-        save_json("baseline.json", {"time": datetime.now(), "config": cfg, "score": score})
+        save_baseline(cfg, score)
         reporter.print_console(alerts, score)
-        print("Đã lưu baseline vào data/baseline.json")
+        print("Đã lưu baseline (đã ký HMAC) vào data/baseline.json")
         return
 
     baseline = load_json("baseline.json")
