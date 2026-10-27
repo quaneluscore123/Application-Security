@@ -3,7 +3,7 @@
 Mỗi hàm assess_* làm bước 2-3 (đủ dữ liệu chưa, có vi phạm không) và trả Finding;
 detect() làm bước 4-6 rồi đổi thành Alert.
 """
-from winguard import cwe_map
+from winguard import cwe_map, cwss, cwss_vectors
 from winguard.attack import ATTACK_CANDIDATES, label
 from winguard.evidence import NOT_PRESENT, Finding, classify, score
 from winguard.models import CONFIRMED_WEAKNESS, NEEDS_REVIEW, Alert
@@ -16,7 +16,7 @@ PRESENTATION = {
     "defender_rtp": ("HIGH", "Bật lại trong Windows Security > Virus & threat protection.", "T1685"),
     "uac": ("HIGH", "Bật lại UAC (EnableLUA = 1).", ""),
 }
-COMPUTE = None  # bộ tính CWSS (bước 5-6) được gắn ở bước triển khai P3
+COMPUTE = cwss.compute  # bước 6; test có thể thay bằng bộ tính lỗi để kiểm nhánh SCORING_ERROR
 
 
 def assess_lockout(cfg: dict) -> Finding:
@@ -91,7 +91,7 @@ DETAIL = {
 
 def _confirmed_alert(f: Finding) -> list[Alert]:
     sev, rec, attack = PRESENTATION[f.root_cause]
-    scored = score(f, cwe_map.lookup, _build_vector, COMPUTE)
+    scored = score(f, cwe_map.lookup, cwss_vectors.build, COMPUTE)
     cwss = scored["cwss"]
     alert = Alert(f.context.get("severity", sev), f.title, DETAIL[f.root_cause], rec.format(profile=f.context.get("profile", "")),
                   label(attack) if attack else "", "config",
@@ -114,10 +114,6 @@ def _review_alert(f: Finding) -> Alert:
     return Alert("INFO", f"Chưa đủ dữ liệu để kết luận: {f.title}", "; ".join(f.missing),
                  "Chạy lại bằng quyền Administrator; kiểm tra collector liên quan.", category="config",
                  pillar=NEEDS_REVIEW, root_cause=f.root_cause, evidence=f.evidence())
-
-
-def _build_vector(f: Finding) -> dict:
-    raise NotImplementedError("bộ chọn vector CWSS chưa được triển khai (P3)")
 
 
 def detect(cfg: dict, profile: str | None = None) -> list[Alert]:

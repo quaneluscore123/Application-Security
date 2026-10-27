@@ -30,6 +30,7 @@
 | **v7.2 sửa 1 — QĐ1** | Bỏ `T1548.002` khỏi cảnh báo cấu hình `EnableLUA == 0`; chỉ gắn khi có bằng chứng hành vi bypass UAC. Giữ dạng *ứng viên tham khảo chưa xác nhận* (`attack_candidates`), không hiển thị như kỹ thuật đã phát hiện. CWE-250 vẫn là *đề xuất*. | "UAC đang tắt" là trạng thái cấu hình, không khớp định nghĩa kỹ thuật *Bypass User Account Control*. |
 | **v7.2 sửa 1 — QĐ2** | Bắt buộc **một người** đối chiếu trực tiếp trang CWSS v1.0.1 gốc (bảng trọng số + Example 4.1); ghi tên, ngày, kết quả vào `winguard/cwss_weights.py`. Chưa có người kiểm tra → `PENDING`. Example 4.2 là chuẩn chính khi 4.1 chưa giải thích được. | Bản trích bằng công cụ đọc web (do AI thực hiện) **không** thay thế việc con người kiểm tra nguồn. |
 | **P2 (triển khai)** | Chữ ký Defender cũ (> 7 ngày) chuyển sang `NEEDS_REVIEW` (không có CWE/vector); Legacy Score giữ MEDIUM. Collector lỗi ở thiết lập đã có `collector_health` báo thì `config_audit` không báo trùng. | Không có căn cứ CWE; tránh trừ điểm hai lần. |
+| **P3 (triển khai)** | Lockout > ngưỡng profile (khác 0): cùng CWE-307, `IC` = L (*có khóa nhưng ngưỡng cao*) thay vì N. Parser chỉ nhận mã Unknown `U` cho AV theo bản trích; `Q` (Quantified) không hỗ trợ. | Dữ liệu collector cho thấy có cơ chế khóa; giữ đúng mã theo bản trích cho tới khi kiểm tra thủ công. |
 | **v7.2 sửa 1 — QĐ3** | Giữ thứ tự P0 → P8. P0 tách *test mô tả hành vi hiện tại* với *test theo đặc tả*; lỗi có sẵn được ghi nhận, không làm yếu/xóa test. | Có mốc regression trước khi thay đổi code. |
 
 ### 0.2. Hiện trạng repository (kiểm tra trực tiếp)
@@ -521,6 +522,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 
 | 28/10/2026 | P1 | `python -m unittest discover -s tests -t . -v` | 48 test: 41 đạt, 7 `expectedFailure`, 0 lỗi | KNOWN-ISSUE-1 sửa xong; KNOWN-ISSUE-2, -3 sửa phần mã ATT&CK. 4 test `tests/current` cập nhật có chủ đích (1102, firewall, Defender, UAC) |
 | 28/10/2026 | P2 | `python -m unittest discover -s tests -t . -v` | 60 test: 56 đạt, 4 `expectedFailure`, 0 lỗi | Luồng bằng chứng + `SCORING_ERROR`; KNOWN-ISSUE-2, -3 sửa xong. Chạy thử `analyze` (không Admin) trên máy lab: Legacy Score vẫn 84/100, 2 phát hiện `CONFIRMED_WEAKNESS` (lockout = 10 → CWE-307, min password = 0 → CWE-521) |
+| 28/10/2026 | P3 | `python -m unittest discover -s tests -t . -v` | 83 test: 79 đạt, 4 `expectedFailure`, 0 lỗi | `cwss_weights.py` (trạng thái `PENDING`), `cwss.py`, `cwss_vectors.py`. Ví dụ 4.2 khớp 51.1; 4.1 ghi nhận mâu thuẫn. Chạy thử trên máy lab: lockout = 10 → CWSS 25.0 (IC = L), min password = 0 → 25.0 |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
@@ -569,7 +571,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **P0 Test nền:** 42 test (34 đạt, 8 `expectedFailure`), chạy 28/10/2026 tại mốc `80fa1c1`, kết quả ở §14; 7 lỗi đã biết ở §14.1.
 - [x] **§4 ATT&CK v20.0 (P1):** STIX đã đối chiếu; `winguard/attack.py` (`ATTACK_MAP`, `ATTACK_CANDIDATES`, `ATTACK_LEGACY`); detector + benchmark lấy mã từ bảng; bỏ T1548.002 khỏi cảnh báo UAC; test ở §14. (Hiển thị phiên bản trong báo cáo: làm ở P7.)
 - [x] **§2 Luồng bằng chứng (P2):** `winguard/evidence.py`, `winguard/cwe_map.py`, trường mới trong `Alert`, `config_audit` chạy qua luồng; `tests/spec/test_evidence_pipeline.py`; kết quả ở §14.
-- [ ] **§3 CWSS:** AI đã trích công thức + trọng số (28/10/2026, không tính là xác minh); còn: **kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1, code + test.
+- [ ] **§3 CWSS:** code + test xong ở P3 (`cwss.py`, `cwss_weights.py`, `cwss_vectors.py`, `tests/spec/test_cwss.py`); **còn: kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1. Chưa được đánh dấu hoàn tất.
 - [ ] **§9 Firewall/UAC/Defender:** thiết kế xong; còn: chạy thử SecurityCenter2, code + test.
 - [ ] **§8 Profile mật khẩu**, **§5 Incident Severity**, **§6 Gom cụm**, **§7 Allowlist**, **§10 Priority**, **§11 Posture**, **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
 
