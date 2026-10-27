@@ -534,6 +534,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 | P4 | `python -m unittest discover -s tests -t . -v` | 118 test: 118 đạt, 0 `expectedFailure`, 0 lỗi | Collector `network_profiles`, `security_center`, `PasswordRequired`, `_status`; `Computer`/`EventRecordID`; profile `--profile`. KNOWN-ISSUE-4…7 sửa xong; 8 test `tests/current` (ConfigAudit, parser) cập nhật có chủ đích. Chạy thử máy lab (không Admin): SecurityCenter2 đọc được không cần Admin (Windows Defender, không có firewall khác); 4 kết nối (ZeroTier ×2, Radmin VPN = Public; Wi-Fi = Private), `NetworkCategory` trả về dạng số nếu không đổi sang tên; Legacy Score 84 (LAB), tài khoản `HP` có `PasswordRequired=False` → `NEEDS_REVIEW` |
 | 28/10/2026 | P5 | `python -m unittest discover -s tests -t . -v` | 144 test: 144 đạt, 0 lỗi | `winguard/incident.py`, `winguard/correlation.py`, `accounts.py` viết lại (tương quan, mâu thuẫn, allowlist), điểm cho brute force/spraying/1102/persistence. 1 test `tests/current` (fixture Administrators) cập nhật có chủ đích |
 | 28/10/2026 | P6 | `python -m unittest discover -s tests -t . -v` | 157 test: 157 đạt, 0 lỗi | `winguard/priority.py` (gắn cho mọi mục `NEEDS_REVIEW` trong `analyze`), `winguard/posture.py` (gom cụm theo `root_cause`, `SCORING_ERROR` → Posture không xác định) |
+| 28/10/2026 | P7 | `python -m unittest discover -s tests -t . -v` | 172 test: 172 đạt, 0 lỗi | `reporter.build_report` dùng chung cho console/HTML/`alerts.json`; `tests/spec/test_consistency.py` (12 kiểm tra §12 + nội dung báo cáo). Chạy thử trên máy lab (không Admin, baseline cũ 27/10): 2 `CONFIRMED_WEAKNESS` (CWSS 25.0 / 25.0), Posture 72.5, 3 Scheduled Task "SoftLanding" mới của Windows so với baseline cũ (báo động do baseline lệch, có từ trước), Legacy 60 |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
@@ -590,7 +591,9 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§7 Allowlist (P5):** `alert_required` tách khỏi điểm; `tests/spec/test_allowlist.py` (6 ca).
 - [x] **§10 Priority (P6):** `priority.py`, mã lý do `review_code`; `tests/spec/test_posture.py`.
 - [x] **§11 Posture (P6):** `posture.py`; `tests/spec/test_posture.py`.
-- [ ] **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
+- [x] **§12 Nhất quán (P7):** `tests/spec/test_consistency.py` — 12 kiểm tra.
+- [x] **§13.3 Báo cáo (P7):** console/HTML/JSON từ một `build_report`, hiển thị ATT&CK v20.0, profile + ngưỡng, ba trụ cột, bằng chứng, hệ số, nhãn nội bộ, trạng thái kiểm tra thủ công CWSS.
+- [ ] **§13.1–13.2 Test + benchmark (P8):** xem §14.
 
 ---
 

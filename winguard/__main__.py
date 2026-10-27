@@ -90,16 +90,17 @@ def main() -> None:
 
     if args.baseline:
         save_baseline(cfg, score)
-        reporter.print_console(alerts, score)
+        reporter.print_console(alerts, score, profile=args.profile)
         print("Đã lưu baseline (đã ký HMAC) vào data/baseline.json")
         return
 
     baseline = load_json("baseline.json")
     base_score = baseline["score"] if baseline else None
-    save_json("alerts.json", {"time": datetime.now(), "score": score,
-                              "alerts": [a.to_dict() for a in alerts]})
-    reporter.print_console(alerts, score, base_score)
-    print(f"Báo cáo HTML: {reporter.write_html(alerts, score, base_score)}")
+    # Console, HTML và alerts.json sinh từ cùng một báo cáo
+    report = reporter.build_report(alerts, score, base_score, args.profile)
+    save_json("alerts.json", report)
+    reporter.print_console(alerts, score, report=report)
+    print(f"Báo cáo HTML: {reporter.write_html(alerts, score, report=report)}")
 
 
 if __name__ == "__main__":
