@@ -10,6 +10,7 @@ tài khoản để né ngưỡng khóa) -> luật brute force theo từng tài k
 from collections import Counter, defaultdict
 from datetime import timedelta
 
+from winguard import incident
 from winguard.attack import label
 from winguard.models import Alert
 
@@ -61,20 +62,26 @@ def detect(events: list[dict], threshold: int = 5, window_min: int = 5,
         detail = (f"{count} lần đăng nhập thất bại vào tài khoản '{user}' "
                   f"từ {first.astimezone():%H:%M:%S} đến {last.astimezone():%H:%M:%S} "
                   f"(nguồn: {', '.join(sources)}).")
-        if any(l["time"] >= first for l in lockouts[user]):
-            alerts.append(Alert("LOW", f"Brute force bị chặn: '{user}' đã bị khóa (Event 4740)",
-                                detail, "Chính sách khóa tài khoản đang hoạt động.", MITRE,
-                                status="mitigated"))
+        locked = [l for l in lockouts[user] if l["time"] >= first]
+        if locked:
+            alert = Alert("LOW", f"Brute force bị chặn: '{user}' đã bị khóa (Event 4740)",
+                          detail, "Chính sách khóa tài khoản đang hoạt động.", MITRE,
+                          status="mitigated")
         else:
-            alerts.append(Alert("HIGH", f"Nghi ngờ Brute Force vào tài khoản '{user}'", detail,
-                                "Bật khóa tài khoản: net accounts /lockoutthreshold:5 ; "
-                                "dùng mật khẩu mạnh hoặc Windows Hello.", MITRE))
+            alert = Alert("HIGH", f"Nghi ngờ Brute Force vào tài khoản '{user}'", detail,
+                          "Bật khóa tài khoản: net accounts /lockoutthreshold:5 ; "
+                          "dùng mật khẩu mạnh hoặc Windows Hello.", MITRE)
+        alerts.append(incident.apply(alert, "credential_guessing", "heuristic", "Credential Access",
+                                     f">= {threshold} lần sai trong {window_min} phút",
+                                     evs[i:j + 1] + locked))
 
     for user, evs in lockouts.items():
         if user not in failures:
-            alerts.append(Alert("MEDIUM", f"Tài khoản '{user}' bị khóa (Event 4740)",
-                                f"{len(evs)} lần khóa, lần cuối lúc {evs[-1]['time'].astimezone():%H:%M:%S}.",
-                                "Kiểm tra nguồn đăng nhập sai.", MITRE))
+            alert = Alert("MEDIUM", f"Tài khoản '{user}' bị khóa (Event 4740)",
+                          f"{len(evs)} lần khóa, lần cuối lúc {evs[-1]['time'].astimezone():%H:%M:%S}.",
+                          "Kiểm tra nguồn đăng nhập sai.", MITRE)
+            alerts.append(incident.apply(alert, "credential_guessing", "heuristic", "Credential Access",
+                                         "Tài khoản bị khóa, không thấy 4625 trong cửa sổ quét", evs))
 
     if spray:
         alerts += _detect_spray(events, window_min)
@@ -106,7 +113,7 @@ def _detect_spray(events: list[dict], window_min: int, spray_accounts: int = 5) 
     for ev in events:
         if ev["id"] == FAILED_LOGON:
             by_source[_source(ev)].append(
-                {"time": ev["time"], "user": ev["data"].get("TargetUserName", "?")})
+                {"time": ev["time"], "user": ev["data"].get("TargetUserName", "?"), "event": ev})
 
     alerts = []
     for source, samples in by_source.items():
@@ -115,10 +122,14 @@ def _detect_spray(events: list[dict], window_min: int, spray_accounts: int = 5) 
             continue
         users = sorted({s["user"] for s in samples})
         shown = ", ".join(users[:6]) + (" …" if len(users) > 6 else "")
-        alerts.append(Alert(
+        alert = Alert(
             "HIGH", f"Nghi ngờ Password Spraying từ nguồn '{source}'",
             f"{count} tài khoản khác nhau bị thử sai từ {first.astimezone():%H:%M:%S} "
             f"đến {last.astimezone():%H:%M:%S} (tài khoản: {shown}).",
             "Bật khóa tài khoản + MFA; theo dõi đăng nhập sai theo NGUỒN, không chỉ theo tài khoản.",
-            SPRAY_MITRE))
+            SPRAY_MITRE)
+        burst = [s["event"] for s in samples if first <= s["time"] <= last]
+        alerts.append(incident.apply(alert, "credential_guessing", "heuristic", "Credential Access",
+                                     f">= {spray_accounts} tài khoản từ một nguồn trong {window_min} phút",
+                                     burst))
     return alerts

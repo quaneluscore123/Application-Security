@@ -32,6 +32,7 @@
 | **P2 (triển khai)** | Chữ ký Defender cũ (> 7 ngày) chuyển sang `NEEDS_REVIEW` (không có CWE/vector); Legacy Score giữ MEDIUM. Collector lỗi ở thiết lập đã có `collector_health` báo thì `config_audit` không báo trùng. | Không có căn cứ CWE; tránh trừ điểm hai lần. |
 | **P3 (triển khai)** | Lockout > ngưỡng profile (khác 0): cùng CWE-307, `IC` = L (*có khóa nhưng ngưỡng cao*) thay vì N. Parser chỉ nhận mã Unknown `U` cho AV theo bản trích; `Q` (Quantified) không hỗ trợ. | Dữ liệu collector cho thấy có cơ chế khóa; giữ đúng mã theo bản trích cho tới khi kiểm tra thủ công. |
 | **P4 (triển khai)** | `NetworkCategory` được đổi sang tên ngay trong collector, luật vẫn chấp nhận cả số 0/1/2. Firewall tắt ở profile đang dùng nhưng có firewall khác bật → `NEEDS_REVIEW` (`OTHER_PRODUCT_ACTIVE`), tương tự Defender. Profile CIS: ngưỡng lockout để `None` (chưa đối chiếu) → `NEEDS_REVIEW`. CLI mặc định `--profile WINGUARD_LAB` (khai báo rõ, in trong báo cáo); gọi `config_audit.detect()` không có profile → `NEEDS_REVIEW`. | Không tự đoán ngưỡng; không kết luận khi có lớp bảo vệ thay thế. |
+| **P5 (triển khai)** | Thêm $T$ = 0.75 cho *tạo tài khoản cục bộ* (bảng §5.2 v7.2 chưa có giá trị). Mâu thuẫn = Event 4732 báo thêm SID nhưng danh sách Administrators lúc quét không có SID đó → $C$ = 0.60 + mục `NEEDS_REVIEW`. Run key không có Event ID riêng → tối đa $C$ = 0.95. | Mọi cảnh báo sự kiện phải có đủ T/C/W; mâu thuẫn được giữ để điều tra, không bỏ qua. |
 | **v7.2 sửa 1 — QĐ3** | Giữ thứ tự P0 → P8. P0 tách *test mô tả hành vi hiện tại* với *test theo đặc tả*; lỗi có sẵn được ghi nhận, không làm yếu/xóa test. | Có mốc regression trước khi thay đổi code. |
 
 ### 0.2. Hiện trạng repository (kiểm tra trực tiếp)
@@ -283,7 +284,7 @@ $$\text{Incident Severity} = 100 \times T \times C \times W$$
 - `score_breakdown = {T, C, W, lý do, event_ids, record_ids}`.
 
 ### 5.2. Hệ số
-- **$T$** (mức nghiêm trọng hành vi): 1.00 thay đổi Administrators; 0.90 xóa Security Log; 0.75 Run key/Scheduled Task; 0.60 brute force/spraying.
+- **$T$** (mức nghiêm trọng hành vi): 1.00 thay đổi Administrators; 0.90 xóa Security Log; 0.75 Run key/Scheduled Task; **0.75 tạo tài khoản cục bộ** (bổ sung ở P5); 0.60 brute force/spraying.
 - **$C$** (độ tin cậy bằng chứng/tương quan — *không phải* ý đồ): 1.00 chuỗi tương quan đầy đủ + baseline diff; 0.95 một nguồn xác nhận đầy đủ trường (VD 1102); 0.80 vượt ngưỡng heuristic; 0.60 thiếu SID/mâu thuẫn → `unverified`.
 - **$W$** (tactic của hành vi quan sát được, theo `ATTACK_MAP` v20.0):
 
@@ -304,7 +305,10 @@ $$\text{Incident Severity} = 100 \times T \times C \times W$$
 | Chỉ 4732 vào Administrators | T1098 | 1.00 | 0.95 | 1.00 | 95.0 |
 | 4732 thiếu `MemberSid` | T1098 | 1.00 | 0.60 | 1.00 | 60.0 (`unverified`) |
 | Event 1102 | T1685.005 | 0.90 | 0.95 | 0.90 | 77.0 |
-| Run key / Task (event + baseline) | T1547.001 / T1053.005 | 0.75 | 1.00 | 0.85 | 63.8 |
+| Scheduled Task (Event 4698 + baseline) | T1053.005 | 0.75 | 1.00 | 0.85 | 63.8 |
+| Run key (chỉ baseline - không có Event ID riêng) / Task chỉ baseline | T1547.001 / T1053.005 | 0.75 | 0.95 | 0.85 | 60.6 |
+| Tạo tài khoản (4720 + baseline) | T1136.001 | 0.75 | 1.00 | 0.85 | 63.8 |
+| Tạo tài khoản (một nguồn) | T1136.001 | 0.75 | 0.95 | 0.85 | 60.6 |
 | Brute force / spraying | T1110 / T1110.003 | 0.60 | 0.80 | 0.75 | 36.0 |
 
 **Test (`tests/test_incident_severity.py`):** hệ số biên; 0 / > 1 → lỗi; 100; half-up (63.75 → 63.8, 76.95 → 77.0); thiếu bằng chứng; mâu thuẫn; chuỗi một sự kiện.
@@ -525,6 +529,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 | P2 | `python -m unittest discover -s tests -t . -v` | 60 test: 56 đạt, 4 `expectedFailure`, 0 lỗi | Luồng bằng chứng + `SCORING_ERROR`; KNOWN-ISSUE-2, -3 sửa xong. Chạy thử `analyze` (không Admin) trên máy lab: Legacy Score vẫn 84/100, 2 phát hiện `CONFIRMED_WEAKNESS` (lockout = 10 → CWE-307, min password = 0 → CWE-521) |
 | 28/10/2026 | P3 | `python -m unittest discover -s tests -t . -v` | 83 test: 79 đạt, 4 `expectedFailure`, 0 lỗi | `cwss_weights.py` (trạng thái `PENDING`), `cwss.py`, `cwss_vectors.py`. Ví dụ 4.2 khớp 51.1; 4.1 ghi nhận mâu thuẫn. Chạy thử trên máy lab: lockout = 10 → CWSS 25.0 (IC = L), min password = 0 → 25.0 |
 | 28/10/2026 | P4 | `python -m unittest discover -s tests -t . -v` | 118 test: 118 đạt, 0 `expectedFailure`, 0 lỗi | Collector `network_profiles`, `security_center`, `PasswordRequired`, `_status`; `Computer`/`EventRecordID`; profile `--profile`. KNOWN-ISSUE-4…7 sửa xong; 8 test `tests/current` (ConfigAudit, parser) cập nhật có chủ đích. Chạy thử máy lab (không Admin): SecurityCenter2 đọc được không cần Admin (Windows Defender, không có firewall khác); 4 kết nối (ZeroTier ×2, Radmin VPN = Public; Wi-Fi = Private), `NetworkCategory` trả về dạng số nếu không đổi sang tên; Legacy Score 84 (LAB), tài khoản `HP` có `PasswordRequired=False` → `NEEDS_REVIEW` |
+| 28/10/2026 | P5 | `python -m unittest discover -s tests -t . -v` | 144 test: 144 đạt, 0 lỗi | `winguard/incident.py`, `winguard/correlation.py`, `accounts.py` viết lại (tương quan, mâu thuẫn, allowlist), điểm cho brute force/spraying/1102/persistence. 1 test `tests/current` (fixture Administrators) cập nhật có chủ đích |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
@@ -576,7 +581,10 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [ ] **§3 CWSS:** code + test xong ở P3 (`cwss.py`, `cwss_weights.py`, `cwss_vectors.py`, `tests/spec/test_cwss.py`); **còn: kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1. Chưa được đánh dấu hoàn tất.
 - [x] **§9 Firewall/UAC/Defender (P4):** collector + luật + `tests/spec/test_firewall.py`, `test_defender.py`, `test_collectors.py`; SecurityCenter2 đã chạy thử trên máy lab; kết quả ở §14.
 - [x] **§8 Profile mật khẩu (P4):** `winguard/profiles.py`, `--profile`, `tests/spec/test_password_profile.py`; kết quả ở §14.
-- [ ] **§5 Incident Severity**, **§6 Gom cụm**, **§7 Allowlist**, **§10 Priority**, **§11 Posture**, **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
+- [x] **§5 Incident Severity (P5):** `incident.py` (miền, half-up, không ép 100, breakdown T/C/W); `tests/spec/test_incident_severity.py`.
+- [x] **§6 Gom cụm (P5):** `correlation.py` (asset, SID, cửa sổ 300 s, sai thứ tự, trùng, thiếu SID); `tests/spec/test_clustering.py`.
+- [x] **§7 Allowlist (P5):** `alert_required` tách khỏi điểm; `tests/spec/test_allowlist.py` (6 ca).
+- [ ] **§10 Priority**, **§11 Posture**, **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
 
 ---
 

@@ -110,9 +110,12 @@ class Accounts(unittest.TestCase):
         self.assertEqual([(a.severity, codes([a])[0]) for a in alerts], [("MEDIUM", "T1136.001")])
 
     def test_allowlisted_added_to_admins_still_alerts(self):
+        # P5: fixture có tài khoản trong admin_members lúc quét (nếu không, P5 coi là mâu thuẫn)
         events = [ev(4720, 0, TargetSid="S-1-5-21-1-2001", TargetUserName="sim_testuser"),
                   ev(4732, 5, TargetSid=ADMINS_SID, MemberSid="S-1-5-21-1-2001")]
-        alerts = accounts.detect(events, base_cfg(), None)
+        cfg = base_cfg(admin_members=[{"Name": "quan", "SID": "S-1-5-21-1-1001"},
+                                      {"Name": "sim_testuser", "SID": "S-1-5-21-1-2001"}])
+        alerts = accounts.detect(events, cfg, None)
         self.assertEqual([(a.severity, codes([a])[0]) for a in alerts], [("HIGH", "T1098")])
 
     def test_baseline_diff_without_events(self):
