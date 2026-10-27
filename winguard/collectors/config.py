@@ -69,13 +69,37 @@ def admin_members() -> list[dict]:
 
 
 def collect() -> dict:
-    return {
-        "accounts_policy": net_accounts(),
-        "firewall": firewall_profiles(),
-        "defender": defender_status(),
-        "uac_enabled": uac_enabled(),
-        "local_users": local_users(),
-        "admin_members": admin_members(),
-        "run_keys": persistence.run_keys(),
-        "scheduled_tasks": persistence.scheduled_tasks(),
-    }
+    """Thu thập cấu hình. Collector nào lỗi/không đọc được thì ghi tên vào `_errors`
+    (thay vì im lặng trả rỗng) để WinGuard báo UNKNOWN và trừ điểm."""
+    cfg: dict = {}
+    errors: list[str] = []
+
+    def grab(name, fn, empty, required=True):
+        try:
+            value = fn()
+        except Exception as exc:  # noqa: BLE001 - mọi lỗi collector đều thành UNKNOWN
+            errors.append(f"{name} ({type(exc).__name__})")
+            return empty
+        if value is None or (required and len(value) == 0):
+            errors.append(name)
+            return empty if value is None else value
+        return value
+
+    cfg["accounts_policy"] = grab("accounts_policy", net_accounts, {})
+    cfg["firewall"] = grab("firewall", firewall_profiles, {})
+    cfg["defender"] = grab("defender", defender_status, {})
+    cfg["local_users"] = grab("local_users", local_users, [])
+    cfg["admin_members"] = grab("admin_members", admin_members, [])
+    cfg["run_keys"] = grab("run_keys", persistence.run_keys, [], required=False)
+    cfg["scheduled_tasks"] = grab("scheduled_tasks", persistence.scheduled_tasks, [])
+
+    try:
+        uac = uac_enabled()
+    except Exception as exc:  # noqa: BLE001
+        uac, _ = None, errors.append(f"uac_enabled ({type(exc).__name__})")
+    if uac is None and "uac_enabled" not in errors:
+        errors.append("uac_enabled")
+    cfg["uac_enabled"] = uac
+
+    cfg["_errors"] = errors
+    return cfg

@@ -1,7 +1,8 @@
 """Mô hình dữ liệu cảnh báo."""
 from dataclasses import dataclass, asdict
 
-SEVERITY_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2, "INFO": 3}
+# UNKNOWN: không thu thập/đo được -> coi là rủi ro (điểm mù), vẫn bị trừ điểm.
+SEVERITY_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2, "UNKNOWN": 3, "INFO": 4}
 
 
 @dataclass

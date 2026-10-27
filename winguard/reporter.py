@@ -5,7 +5,7 @@ from html import escape
 from winguard.models import SEVERITY_ORDER, Alert
 from winguard.utils import DATA_DIR
 
-ICON = {"HIGH": "[!!]", "MEDIUM": "[! ]", "LOW": "[ .]", "INFO": "[ i]"}
+ICON = {"HIGH": "[!!]", "MEDIUM": "[! ]", "LOW": "[ .]", "UNKNOWN": "[ ?]", "INFO": "[ i]"}
 
 
 def _sorted(alerts: list[Alert]) -> list[Alert]:
@@ -48,7 +48,8 @@ table{{border-collapse:collapse;width:100%;background:#fff;margin-top:16px}}
 td,th{{border:1px solid #dde1e7;padding:8px;vertical-align:top;text-align:left}}
 .sev{{padding:2px 8px;border-radius:4px;color:#fff;font-weight:600}}
 .high .sev{{background:#c62828}} .medium .sev{{background:#ef6c00}}
-.low .sev{{background:#558b2f}} .info .sev{{background:#546e7a}} .done{{opacity:.7}}
+.low .sev{{background:#558b2f}} .unknown .sev{{background:#8e6c17}}
+.info .sev{{background:#546e7a}} .done{{opacity:.7}}
 code{{white-space:pre-wrap}}
 </style></head><body>
 <h1>WinGuard - Báo cáo bảo mật</h1><div>{datetime.now():%Y-%m-%d %H:%M:%S}</div>
