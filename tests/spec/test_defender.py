@@ -32,6 +32,10 @@ class DefenderWithOtherAv(unittest.TestCase):
         cfg["_status"] = {"security_center": "error"}
         self.assertEqual([a.pillar for a in defender(cfg)], [NEEDS_REVIEW])
 
+    def test_rtp_field_missing_is_review(self):
+        alerts = defender(lan_cfg(defender={"AntivirusSignatureAge": 0}))
+        self.assertEqual([a.pillar for a in alerts], [NEEDS_REVIEW])
+
     def test_rtp_on_no_alert(self):
         self.assertEqual(defender(lan_cfg()), [])
 

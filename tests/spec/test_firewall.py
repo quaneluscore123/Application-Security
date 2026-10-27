@@ -91,6 +91,11 @@ class MissingOrBadData(unittest.TestCase):
     def test_firewall_empty(self):
         self.assertEqual(pillars(cfg({}, [net("Wi-Fi", "Private")])), [NEEDS_REVIEW])
 
+    def test_enabled_unreadable_is_review_not_off(self):
+        alerts = fw(cfg({"Domain": True, "Private": None, "Public": True}, [net("Wi-Fi", "Private")]))
+        self.assertEqual([(a.pillar, a.evidence["review_code"]) for a in alerts],
+                         [(NEEDS_REVIEW, "COLLECTOR_ERROR")])
+
     def test_unmapped_category(self):
         alerts = fw(cfg(off("Private"), [net("Wi-Fi", "Private"), net("Khac", "Unknown")]))
         self.assertEqual(sorted(a.pillar for a in alerts), [CONFIRMED_WEAKNESS, NEEDS_REVIEW])

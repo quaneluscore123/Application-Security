@@ -70,9 +70,10 @@ def assess_min_password(cfg: dict, profile_name: str | None) -> Finding:
         return _review(f, f"profile chưa xác định: {profile_name!r}", "PROFILE_UNDEFINED")
     threshold = prof["min_password_length"]
     f.expected, f.context["min_len"] = f">= {threshold}", threshold
-    f.title = f"Độ dài mật khẩu tối thiểu thấp ({min_len} < {threshold}, profile {profile_name})"
     if min_len is None:
+        f.title = "Độ dài mật khẩu tối thiểu (không đọc được)"
         return _review(f, "không đọc được độ dài mật khẩu tối thiểu", "COLLECTOR_ERROR")
+    f.title = f"Độ dài mật khẩu tối thiểu thấp ({min_len} < {threshold}, profile {profile_name})"
     return classify(f, min_len < threshold)
 
 
@@ -115,6 +116,12 @@ def assess_firewall(cfg: dict) -> list[Finding]:
     other_fw = _other_products(cfg, "firewall")
 
     for profile, enabled in fw.items():
+        if enabled is None:  # không đọc được: không được coi là "tắt"
+            out.append(_review(Finding("firewall", f"firewall:{profile}",
+                                       f"Không đọc được trạng thái tường lửa profile {profile}",
+                                       source="Get-NetFirewallProfile", raw={profile: enabled}),
+                               "Get-NetFirewallProfile không trả về Enabled", "COLLECTOR_ERROR"))
+            continue
         if bool(enabled):
             continue
         f = Finding("firewall", f"firewall:{profile}", f"Tường lửa profile {profile} đang TẮT",
@@ -151,6 +158,8 @@ def assess_defender(cfg: dict) -> Finding | None:
                 context={"other_av": other_av})
     if rtp:
         return classify(f, False)
+    if rtp is None:
+        return _review(f, "Get-MpComputerStatus không trả về RealTimeProtectionEnabled", "COLLECTOR_ERROR")
     if other_av is None:
         return _review(f, "không đọc được SecurityCenter2 để biết có sản phẩm chống mã độc khác",
                        "COLLECTOR_ERROR")

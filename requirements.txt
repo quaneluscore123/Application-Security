@@ -1,3 +1,2 @@
-# Giai đoạn 1 chỉ dùng thư viện chuẩn của Python 3.10+.
-# Các giai đoạn sau:
-# psutil>=5.9   # module giám sát kết nối mạng
+# WinGuard chỉ dùng thư viện chuẩn của Python 3.10+ và PowerShell có sẵn trong Windows;
+# không cần cài thêm gói nào.

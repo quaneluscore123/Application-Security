@@ -50,6 +50,14 @@ class CisProfile(unittest.TestCase):
         self.assertEqual([a.pillar for a in alerts], [NEEDS_REVIEW])
 
 
+class MissingValue(unittest.TestCase):
+    def test_missing_min_length_title_has_no_none(self):
+        cfg = lan_cfg(accounts_policy={"lockout_threshold": 5})
+        alerts = [a for a in config_audit.detect(cfg, profile=LAB) if a.root_cause == "min_password_length"]
+        self.assertEqual([a.pillar for a in alerts], [NEEDS_REVIEW])
+        self.assertNotIn("None", alerts[0].title)
+
+
 class MissingProfile(unittest.TestCase):
     def test_missing_profile(self):
         alerts = [a for a in run(3, None) if a.root_cause == "min_password_length"]
