@@ -540,6 +540,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 01:00–01:04 | `48d0e8b` (nhánh `feature/v7.2-cwss`) | `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` (Admin, nhóm chạy) | 18/18 lần phát hiện (6 kịch bản × 3, mã ATT&CK v20.0); 0 cảnh báo sự kiện sau 3 lần quét sạch; spraying: v1 0/3, v2 3/3; `benchmark.json` ghi `attack_version = Enterprise v20.0` | Không regression so với mốc `80fa1c1` (27/10: 18/18, 0, 0/3 vs 3/3). Chỉ áp dụng cho 6 kịch bản tự mô phỏng trên một máy |
 | 28/10/2026 | `48d0e8b` | `python -m winguard --baseline` (Admin, nhóm chạy) | Baseline mới đã ký HMAC; Posture 72.5; Legacy 84/100; 2 `CONFIRMED_WEAKNESS` (lockout = 10, min password = 0, CWSS 25.0 mỗi mục), 1 `NEEDS_REVIEW` (`HP` PasswordRequired=False), 0 `ATTACK_OBSERVED` | Thay baseline 27/10 (hết 3 cảnh báo Scheduled Task "SoftLanding" do baseline lệch) |
 | 28/10/2026 | — | Kiểm tra thủ công CWSS (§3.2a) | Nhóm báo "MATCH" toàn bộ; **chưa đủ hồ sơ**: thiếu tên người kiểm tra, ngày, giá trị BI trong vector Example 4.1, mã Unknown của AV, ảnh chụp | `CWSS_MANUAL_CHECK` giữ `PENDING` cho tới khi đủ hồ sơ (QĐ2) |
+| 27/10/2026 (theo người kiểm tra) | — | Kiểm tra thủ công CWSS (§3.2a) — người kiểm tra: **Hoàng Minh Quân** | Công thức: MATCH; bảng trọng số: MATCH; Example 4.2: MATCH (84.0 / 0.935 / 0.65 / 51.1); **Example 4.1: DISCREPANCY** — vector trên trang gốc in `BI:C,0.9`, trong khi Env = 1.0 và điểm 92.6 chỉ đúng với BI = 1.0 | Đã ghi vào `CWSS_MANUAL_CHECK`. Trạng thái chung vẫn `PENDING`: **còn thiếu ảnh chụp** (`docs/audit/`), mã Unknown của AV (`U`/`UK`), vector nguyên văn Example 4.2 |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do (cập nhật 28/10/2026):** (1) ~~benchmark sau thay đổi~~ — **đã chạy 28/10/2026 01:00 (xem bảng)**; trước đó: cần quyền Administrator, AI không có; nhóm chạy `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` → `tools
@@ -607,7 +608,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 ## 16. Giả định & Điểm Chưa Xác minh
 
 1. Bảng trọng số CWSS do AI trích bằng công cụ đọc web; kiểm tra thủ công bởi người: **`PENDING`** (§3.2a).
-2. Ví dụ CWSS 4.1: mâu thuẫn BI (0.9 trong vector, 1.0 theo Env) — chưa giải thích; **`PENDING`** kiểm tra thủ công. Ví dụ 4.2 là chuẩn chính.
+2. Ví dụ CWSS 4.1: người kiểm tra **xác nhận** vector trên trang gốc in `BI:C,0.9` trong khi Env = 1.0 → mâu thuẫn trong chính tài liệu nguồn (ghi `DISCREPANCY`, không sửa số). Ví dụ 4.2 là chuẩn chính.
 3. ~~`revoked-by` trong STIX v20.0~~ — **đã xác minh ở P1** (§4.2).
 4. ~~Mã TA của Stealth~~ — **TA0005**, đã xác minh ở P1.
 5. ~~T1548.002 cho "UAC đang tắt"~~ — **đã quyết (QĐ1)**: không gắn; chỉ là ứng viên chưa xác nhận.

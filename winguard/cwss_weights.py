@@ -7,31 +7,34 @@ người thật mở trang gốc, đối chiếu theo checklist §3.2a và đi�
 CWSS_SOURCE = "https://cwe.mitre.org/cwss/cwss_v1.0.1.html"
 CWSS_EXTRACTED = {"by": "AI (công cụ đọc web)", "date": "2026-10-28"}
 
+# Kết quả do người kiểm tra báo lại (AI chỉ ghi chép, không tự kiểm tra). Trạng thái chung giữ
+# PENDING cho tới khi đủ hồ sơ: còn thiếu ảnh chụp và mã Unknown của AV (xem "notes").
 CWSS_MANUAL_CHECK = {
     "status": "PENDING",        # PENDING | VERIFIED | DISCREPANCY
-    "reviewer": "PENDING",      # tên người thật đã mở trang gốc
-    "date": "PENDING",          # YYYY-MM-DD
+    "reviewer": "Hoàng Minh Quân",
+    "date": "2026-10-27",       # theo người kiểm tra báo
     "source_url": CWSS_SOURCE,
-    "formulas": "PENDING",      # MATCH | MISMATCH + mô tả
-    "weight_table": "PENDING",  # MATCH | MISMATCH + danh sách dòng lệch
+    "formulas": "MATCH",
+    "weight_table": "MATCH",
     "example_4_1": {
-        "status": "PENDING",    # MATCH | DISCREPANCY
-        "vector_as_published": "PENDING",
-        "base": "PENDING", "attack_surface": "PENDING",
-        "environmental": "PENDING", "score": "PENDING",
-        "bi_value_in_vector": "PENDING",
+        "status": "DISCREPANCY",  # mâu thuẫn nằm trong chính tài liệu nguồn, không sửa số
+        "vector_as_published": "(TI:H,0.9/AP:A,1.0/AL:A,1.0/IC:N,1.0/FC:T,1.0/RP:L,0.9/RL:A,1.0/AV:I,1.0/"
+                               "AS:N,1.0/IN:T,0.9/SC:A,1.0/BI:C,0.9/DI:H,1.0/EX:H,1.0/EC:N,1.0/P:NA,1.0)",
+        "base": 96.0, "attack_surface": 0.965, "environmental": 1.0, "score": 92.6,
+        "bi_value_in_vector": 0.9,
         "screenshot": "PENDING",
     },
     "example_4_2": {
-        "status": "PENDING",
+        "status": "MATCH",
         "vector_as_published": "PENDING",
-        "base": "PENDING", "attack_surface": "PENDING",
-        "environmental": "PENDING", "score": "PENDING",
+        "base": 84.0, "attack_surface": 0.935, "environmental": 0.65, "score": 51.1,
         "re_handling": "PENDING",
         "screenshot": "PENDING",
     },
     "weight_table_screenshots": [],
-    "notes": "",
+    "notes": "Ví dụ 4.1: vector in BI:C,0.9 nhưng bảng trọng số ghi C = 1.0 và Environmental = 1.0, "
+             "điểm 92.6 chỉ đúng với BI = 1.0 (với 0.9: Env 0.95, điểm 88.0). "
+             "Còn thiếu: ảnh chụp (docs/audit/), mã Unknown của AV (U hay UK), vector nguyên văn ví dụ 4.2.",
 }
 
 # metric -> {mã: trọng số}. "Q" (Quantified) không hỗ trợ.
@@ -55,8 +58,8 @@ WEIGHTS = {
     "P": {"W": 1.0, "H": 0.9, "C": 0.8, "L": 0.7, "D": 0.85, "UK": 0.5, "NA": 1.0},
 }
 
-# Ví dụ trong tài liệu gốc (theo bản trích). 4.2 là chuẩn chính; 4.1 có mâu thuẫn chưa giải thích:
-# vector in "BI:C,0.9" nhưng Environmental = 1.0 chỉ đúng khi BI = 1.0 (trọng số của mã C).
+# Ví dụ trong tài liệu gốc. 4.2 là chuẩn chính; 4.1 có mâu thuẫn trong chính tài liệu (người kiểm tra
+# xác nhận vector in "BI:C,0.9") nhưng Environmental = 1.0 chỉ đúng khi BI = 1.0 (trọng số của mã C).
 EXAMPLES = {
     "4.2": {"vector": "TI:M/AP:A/AL:A/IC:N/FC:T/RP:RU/RL:A/AV:I/AS:W/IN:A/SC:NA/"
                       "BI:L/DI:NA/EX:NA/EC:N/RE:NA/P:NA",
@@ -64,7 +67,7 @@ EXAMPLES = {
     "4.1": {"vector": "TI:H/AP:A/AL:A/IC:N/FC:T/RP:L/RL:A/AV:I/AS:N/IN:T/SC:A/"
                       "BI:C/DI:H/EX:H/EC:N/P:NA",
             "base": 96.0, "attack_surface": 0.965, "environmental": 1.0, "score": 92.6,
-            "printed_bi_weight": 0.9, "status": "DISCREPANCY_PENDING_MANUAL_CHECK"},
+            "printed_bi_weight": 0.9, "status": "DISCREPANCY_CONFIRMED_BY_REVIEWER"},
 }
 
 _REQUIRED_FOR_VERIFIED = ("reviewer", "date", "formulas", "weight_table")

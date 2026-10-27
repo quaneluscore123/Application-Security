@@ -33,7 +33,9 @@ class OfficialExamples(unittest.TestCase):
     def test_example_4_1_discrepancy_recorded_not_used_as_standard(self):
         ex = EXAMPLES["4.1"]
         # Không sửa nguồn: ghi nhận rằng trọng số mã C (1.0) và trọng số in kèm (0.9) cho kết quả khác nhau
-        self.assertEqual(ex["status"], "DISCREPANCY_PENDING_MANUAL_CHECK")
+        self.assertEqual(ex["status"], "DISCREPANCY_CONFIRMED_BY_REVIEWER")
+        self.assertEqual(CWSS_MANUAL_CHECK["example_4_1"]["status"], "DISCREPANCY")
+        self.assertEqual(CWSS_MANUAL_CHECK["example_4_1"]["bi_value_in_vector"], ex["printed_bi_weight"])
         self.assertNotEqual(WEIGHTS["BI"]["C"], ex["printed_bi_weight"])
         self.assertEqual(cwss.compute(ex["vector"])["score"], ex["score"])
         with_printed = ex["base"] * ex["attack_surface"] * (10 * 0.9 + 3 + 4 + 3) / 20
