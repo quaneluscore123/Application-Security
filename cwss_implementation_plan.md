@@ -601,7 +601,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§12 Nhất quán (P7):** `tests/spec/test_consistency.py` — 12 kiểm tra.
 - [x] **§13.3 Báo cáo (P7):** console/HTML/JSON từ một `build_report`, hiển thị ATT&CK v20.0, profile + ngưỡng, ba trụ cột, bằng chứng, hệ số, nhãn nội bộ, trạng thái kiểm tra thủ công CWSS.
 - [x] **§13.1–13.2 Test + benchmark (P8):** unit test 172/172; benchmark Admin 28/10/2026 (18/18, 0 cảnh báo quét sạch, spraying v1 0/3 – v2 3/3) tại `48d0e8b`.
-- [ ] **P8 đồng bộ tài liệu:** README xong; **còn báo cáo (Claude Doc) và slide** (T1070.001 → T1685.005, bỏ T1548.002 khỏi UAC, ba trụ cột, số liệu benchmark mới) — làm sau khi có benchmark.
+- [ ] **P8 đồng bộ tài liệu:** README xong; **báo cáo (Claude Doc) cập nhật 28/10/2026** (detection engineering, 6 kịch bản, ATT&CK v20.0 / T1685.005, ba trụ cột, benchmark 18/18, thử né luật, Phụ lục D hồ sơ CWSS); **còn slide**, Hình 2.1 (sơ đồ kiến trúc) trong báo cáo vẫn là bản cũ.
 
 ---
 
