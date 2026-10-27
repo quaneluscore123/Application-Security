@@ -9,10 +9,12 @@ import argparse
 import sys
 from datetime import datetime
 
-from simulator.scenarios import admin_group, bruteforce, new_account, runkey, scheduled_task
+from simulator.scenarios import (admin_group, bruteforce, new_account, runkey,
+                                 scheduled_task, spray)
 from winguard.utils import is_admin, load_json, save_json
 
-SCENARIOS = {s.NAME: s for s in [bruteforce, new_account, admin_group, runkey, scheduled_task]}
+SCENARIOS = {s.NAME: s for s in
+             [bruteforce, spray, new_account, admin_group, runkey, scheduled_task]}
 
 
 def confirm(msg: str, assume_yes: bool) -> bool:

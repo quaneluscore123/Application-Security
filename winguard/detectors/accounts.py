@@ -9,9 +9,15 @@ from winguard.models import Alert
 
 ACCOUNT_CREATED = 4720
 MEMBER_ADDED = 4732
-# Tài khoản tạo mới đã được phê duyệt (giảm báo động giả). sim_testuser phục vụ kịch bản 1.
-# Allowlist chỉ áp dụng cho việc TẠO tài khoản, không áp dụng khi tài khoản được thêm vào Admin.
+# Tài khoản lab đã được phê duyệt (giảm báo động giả): sim_testuser (kịch bản brute force)
+# và sim_spray* (kịch bản password spraying). Allowlist chỉ áp dụng cho việc TẠO tài khoản,
+# KHÔNG áp dụng khi tài khoản được thêm vào nhóm Admin.
 ALLOWED_NEW_ACCOUNTS = {"sim_testuser"}
+ALLOWED_PREFIXES = ("sim_spray",)
+
+
+def _is_allowed(name: str) -> bool:
+    return name in ALLOWED_NEW_ACCOUNTS or name.startswith(ALLOWED_PREFIXES)
 
 
 def _event_note(ev: dict) -> str:
@@ -57,7 +63,7 @@ def detect(events: list[dict], cfg: dict, baseline_cfg: dict | None) -> list[Ale
                             "T1098 Account Manipulation"))
     for sid, notes in new_users.items():
         name = names.get(sid, sid)
-        if name in ALLOWED_NEW_ACCOUNTS:
+        if _is_allowed(name):
             continue
         alerts.append(Alert("MEDIUM", f"Tài khoản mới '{name}' được tạo",
                             "; ".join(notes) + f". SID: {sid}",
