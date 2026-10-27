@@ -1,7 +1,7 @@
 # Đặc tả Thiết kế & Kế hoạch Triển khai: Hệ thống Đánh giá Bảo mật WinGuard
 *(Phiên bản v7.2 — bản sửa 1: Chốt ATT&CK Enterprise v20.0, tách luồng Bằng chứng → Trạng thái → CWE → CWSS, làm rõ phạm vi áp dụng CWSS, nâng độ tin cậy collector Firewall, bổ sung test nhất quán; chốt 3 quyết định: bỏ T1548.002 khỏi cảnh báo UAC, bắt buộc kiểm tra CWSS thủ công bởi người, giữ thứ tự P0 → P8)*
 
-> **Trạng thái tài liệu:** ĐANG TRIỂN KHAI trên nhánh `feature/v7.2-cwss` (kế hoạch đã được duyệt ngày 28/10/2026). P0–P7 xong; **P8 chưa hoàn tất** (chờ benchmark quyền Admin, kiểm tra thủ công CWSS, cập nhật báo cáo/slide) — xem §14–§15.
+> **Trạng thái tài liệu:** ĐÃ TRIỂN KHAI trên nhánh `feature/v7.2-cwss` (28/10/2026): P0–P8 xong, 178/178 test, benchmark 18/18, CWSS `VERIFIED`. Chưa gộp vào `main` (nhóm quyết định). Việc còn mở không thuộc code: xem mục P8 ở §15.
 > **Mốc repository rà soát:** commit `80fa1c1` (nhánh `main`).
 > **Ngày rà soát nguồn ngoài:** 28/10/2026.
 > Hạng mục chỉ được đánh dấu hoàn tất theo §14.
@@ -602,7 +602,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§12 Nhất quán (P7):** `tests/spec/test_consistency.py` — 12 kiểm tra.
 - [x] **§13.3 Báo cáo (P7):** console/HTML/JSON từ một `build_report`, hiển thị ATT&CK v20.0, profile + ngưỡng, ba trụ cột, bằng chứng, hệ số, nhãn nội bộ, trạng thái kiểm tra thủ công CWSS.
 - [x] **§13.1–13.2 Test + benchmark (P8):** unit test 172/172; benchmark Admin 28/10/2026 (18/18, 0 cảnh báo quét sạch, spraying v1 0/3 – v2 3/3) tại `48d0e8b`.
-- [ ] **P8 đồng bộ tài liệu:** README xong; **báo cáo (Claude Doc) cập nhật 28/10/2026** (detection engineering, 6 kịch bản, ATT&CK v20.0 / T1685.005, ba trụ cột, benchmark 18/18, thử né luật, Phụ lục D hồ sơ CWSS); **còn slide**, Hình 2.1 (sơ đồ kiến trúc) trong báo cáo vẫn là bản cũ.
+- [x] **P8 đồng bộ tài liệu (28/10/2026):** README; báo cáo (Claude Doc: detection engineering, 6 kịch bản, ATT&CK v20.0 / T1685.005, ba trụ cột, benchmark 18/18, thử né luật, Phụ lục D hồ sơ CWSS); slide (15 slide, thêm "Ba trụ cột", "Đo lặp lại", "Thử né luật"). **Còn mở, không thuộc code:** Hình 2.1 trong báo cáo là sơ đồ cũ; ảnh 14–16 (Phụ lục C) và điểm Legacy của kịch bản 6 chưa chụp; tên thành viên/giảng viên trên slide và bảng phân công còn để trống.
 
 ---
 
