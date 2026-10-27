@@ -10,11 +10,12 @@ import hmac
 import json
 import secrets
 
+from winguard.attack import label
 from winguard.models import Alert
 from winguard.utils import DATA_DIR
 
 KEY_FILE = "baseline.key"
-MITRE = "T1565.001 Stored Data Manipulation"
+MITRE = label("T1565.001")
 
 
 def _canon(config) -> bytes:

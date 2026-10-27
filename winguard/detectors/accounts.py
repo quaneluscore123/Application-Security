@@ -4,6 +4,7 @@ Hai lớp phát hiện, gộp theo SID để không báo trùng:
 - Event Log: 4720 (tạo tài khoản), 4732 (thêm thành viên vào nhóm)
 - So với baseline: vẫn phát hiện được nếu kẻ tấn công đã xóa log
 """
+from winguard.attack import label
 from winguard.collectors.config import ADMINS_SID
 from winguard.models import Alert
 
@@ -60,7 +61,7 @@ def detect(events: list[dict], cfg: dict, baseline_cfg: dict | None) -> list[Ale
                             "; ".join(notes) + f". SID: {sid}",
                             f"Nếu không phải bạn làm: net localgroup Administrators {name} /delete ; "
                             "dùng tài khoản Standard hằng ngày (quyền tối thiểu), giữ UAC bật.",
-                            "T1098 Account Manipulation"))
+                            label("T1098")))
     for sid, notes in new_users.items():
         name = names.get(sid, sid)
         if _is_allowed(name):
@@ -68,5 +69,5 @@ def detect(events: list[dict], cfg: dict, baseline_cfg: dict | None) -> list[Ale
         alerts.append(Alert("MEDIUM", f"Tài khoản mới '{name}' được tạo",
                             "; ".join(notes) + f". SID: {sid}",
                             f"Xác minh tài khoản; nếu lạ: net user {name} /delete",
-                            "T1136.001 Create Account: Local Account"))
+                            label("T1136.001")))
     return alerts

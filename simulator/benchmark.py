@@ -16,6 +16,7 @@ from datetime import datetime
 
 from simulator.__main__ import SCENARIOS
 from winguard import scoring
+from winguard.attack import ATTACK_MAP, ATTACK_VERSION
 from winguard.__main__ import analyze, save_baseline
 from winguard.utils import is_admin, save_json
 
@@ -28,6 +29,8 @@ EXPECTED = {
     "runkey": ("T1547.001", set()),
     "scheduled_task": ("T1053.005", set()),
 }
+# Mã mong đợi phải còn hiệu lực trong ATTACK_MAP (ATT&CK v20.0)
+assert all(c in ATTACK_MAP for p, extra in EXPECTED.values() for c in {p, *extra})
 SETTLE = 2  # giây chờ Windows ghi xong log trước khi quét
 
 
@@ -121,7 +124,7 @@ def main() -> None:
     print(f"[*] Thử né luật ({args.runs} lần password spraying, luật v1 và v2)")
     ev = measure_evasion(args.runs)
 
-    save_json("benchmark.json", {"time": datetime.now(), "detection": det,
+    save_json("benchmark.json", {"time": datetime.now(), "attack_version": ATTACK_VERSION, "detection": det,
                                  "false_positives": fp, "evasion": ev})
     _print_tables(det, fp, ev)
     print("\nĐã lưu data/benchmark.json. Nhớ chạy tools\\restore.ps1 khi xong.")

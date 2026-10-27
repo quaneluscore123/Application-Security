@@ -10,12 +10,13 @@ tài khoản để né ngưỡng khóa) -> luật brute force theo từng tài k
 from collections import Counter, defaultdict
 from datetime import timedelta
 
+from winguard.attack import label
 from winguard.models import Alert
 
 FAILED_LOGON = 4625
 ACCOUNT_LOCKED = 4740
-MITRE = "T1110 Brute Force"
-SPRAY_MITRE = "T1110.003 Password Spraying"
+MITRE = label("T1110")
+SPRAY_MITRE = label("T1110.003")
 
 
 def _max_burst(times: list, window: timedelta) -> tuple[int, int, int]:

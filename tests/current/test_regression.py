@@ -7,6 +7,7 @@ from unittest import mock
 from simulator import benchmark
 from tests.helpers import ADMINS_SID, EVENT_XML, base_cfg, ev, failed_logon
 from winguard import integrity, scoring
+from winguard.attack import label
 from winguard.collectors import eventlog
 from winguard.detectors import (accounts, bruteforce, collector_health, config_audit, evasion,
                                 persistence)
@@ -56,8 +57,8 @@ class Evasion(unittest.TestCase):
         alerts = evasion.detect([ev(1102, 0)])
         self.assertEqual(len(alerts), 1)
         self.assertEqual(alerts[0].severity, "HIGH")
-        # KNOWN-ISSUE-1: mã T1070.001 đã bị thu hồi trong ATT&CK v20.0 (revoked-by T1685.005)
-        self.assertEqual(alerts[0].mitre, "T1070.001 Clear Windows Event Logs")
+        # KNOWN-ISSUE-1 đã sửa ở P1: T1070.001 (revoked) -> T1685.005 (ATT&CK v20.0)
+        self.assertEqual(alerts[0].mitre, label("T1685.005"))
 
     def test_other_events_ignored(self):
         self.assertEqual(evasion.detect([ev(1100, 0), failed_logon("u")]), [])
@@ -162,20 +163,18 @@ class ConfigAudit(unittest.TestCase):
                          ["HIGH"])
 
     def test_any_firewall_profile_off_is_high(self):
-        # KNOWN-ISSUE-4: không xét profile đang hoạt động; KNOWN-ISSUE-3: mã T1562.004 đã bị thu hồi
+        # KNOWN-ISSUE-4: không xét profile đang hoạt động. KNOWN-ISSUE-3 (mã) đã sửa ở P1: T1686.003
         alerts = config_audit.detect(base_cfg(firewall={"Domain": False, "Private": True, "Public": True}))
-        self.assertEqual([(a.severity, a.mitre) for a in alerts],
-                         [("HIGH", "T1562.004 Disable or Modify System Firewall")])
+        self.assertEqual([(a.severity, a.mitre) for a in alerts], [("HIGH", label("T1686.003"))])
 
     def test_defender_off(self):
-        # KNOWN-ISSUE-3: T1562.001 đã bị thu hồi; KNOWN-ISSUE-7: không kiểm tra AV khác
+        # KNOWN-ISSUE-7: không kiểm tra AV khác. KNOWN-ISSUE-3 (mã) đã sửa ở P1: T1562.001 -> T1685
         cfg = base_cfg(defender={"RealTimeProtectionEnabled": False, "AntivirusSignatureAge": 0})
-        self.assertEqual([a.mitre for a in config_audit.detect(cfg)], ["T1562.001 Disable or Modify Tools"])
+        self.assertEqual([a.mitre for a in config_audit.detect(cfg)], [label("T1685")])
 
     def test_uac_off(self):
-        # KNOWN-ISSUE-2: gắn T1548.002 cho trạng thái cấu hình (QĐ1: không gắn)
-        self.assertEqual([a.mitre for a in config_audit.detect(base_cfg(uac_enabled=False))],
-                         ["T1548.002 Bypass UAC"])
+        # KNOWN-ISSUE-2 (phần mã) đã sửa ở P1: không gắn T1548.002 (QĐ1); CWE/ứng viên làm ở P2
+        self.assertEqual([a.mitre for a in config_audit.detect(base_cfg(uac_enabled=False))], [""])
 
 
 class Scoring(unittest.TestCase):

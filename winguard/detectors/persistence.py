@@ -7,6 +7,7 @@ dùng trình thông dịch script...) được nâng mức cảnh báo.
 """
 import re
 
+from winguard.attack import label
 from winguard.models import Alert
 
 TASK_CREATED = 4698
@@ -42,7 +43,7 @@ def detect(events: list[dict], cfg: dict, baseline_cfg: dict | None) -> list[Ale
                 f"{e['location']} -> {e['command']}. Không có trong baseline.{_suspicious_reason(e['command'])}",
                 f"Nếu lạ: reg delete \"{e['location']}\" /v \"{e['name']}\" /f ; "
                 "rà soát định kỳ bằng Sysinternals Autoruns.",
-                "T1547.001 Registry Run Keys"))
+                label("T1547.001")))
 
     if "scheduled_tasks" in baseline_cfg:
         known = {_task_id(t) for t in baseline_cfg["scheduled_tasks"]}
@@ -62,5 +63,5 @@ def detect(events: list[dict], cfg: dict, baseline_cfg: dict | None) -> list[Ale
                 f"Hành động: {t['Actions']}. {'; '.join(notes)}.{reason}",
                 f"Nếu lạ: Unregister-ScheduledTask -TaskName '{t['TaskName']}' -TaskPath '{t['TaskPath']}' "
                 "-Confirm:$false ; giám sát Task Scheduler.",
-                "T1053.005 Scheduled Task"))
+                label("T1053.005")))
     return alerts

@@ -1,13 +1,15 @@
 """Phát hiện hành vi né tránh phòng thủ / xóa dấu vết.
 
-- Event 1102: Security Event Log bị xóa (MITRE T1070.001 Clear Windows Event Logs).
+- Event 1102: Security Event Log bị xóa (ATT&CK v20.0: T1685.005 Clear Windows Event Logs;
+  trước v19 là T1070.001, đã bị thu hồi).
   Đây là dấu hiệu giai đoạn 5 (xóa dấu vết). 1102 được Windows tự ghi lại ngay
   sau khi log bị xóa nên không cần bật audit riêng.
 """
+from winguard.attack import label
 from winguard.models import Alert
 
 LOG_CLEARED = 1102
-MITRE = "T1070.001 Clear Windows Event Logs"
+MITRE = label("T1685.005")
 
 
 def detect(events: list[dict]) -> list[Alert]:

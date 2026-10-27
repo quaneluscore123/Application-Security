@@ -222,7 +222,7 @@ Ghi chú: điểm giảm mạnh vì `UK` = 0.5 là trọng số chính thức; �
 - **`ATTACK_VERSION = "Enterprise v20.0"`**, phát hành 13/10/2026 (trang *attack.mitre.org/resources/versions* ghi là bản hiện hành).
 - **Ngày xác minh:** 28/10/2026, do AI đối chiếu bằng công cụ đọc web trên trang kỹ thuật attack.mitre.org và changelog v18.1 → v19.0. Cột "Trạng thái xác minh" ở §4.2 mang nghĩa này; xác minh cuối cùng bằng STIX ở P1 (khác với CWSS, ATT&CK được kiểm lại tự động bằng dữ liệu máy đọc).
 - **Nguồn dữ liệu máy đọc dùng khi code:** bản STIX `ATT&CK-v20.0` tại https://github.com/mitre/cti/releases/tag/ATT%26CK-v20.0 — ghi checksum file vào `winguard/attack.py`. Test mapping đọc ID từ bảng tĩnh `ATTACK_MAP`, không tải mạng khi chạy test.
-- Thay đổi cấu trúc quan trọng (v19.0): tactic *Defense Evasion* được tách; xuất hiện tactic **Defense Impairment (TA0112)** và tactic **Stealth** (ví dụ T1070 nay thuộc Stealth). Mã TA của Stealth **chưa xác minh**.
+- Thay đổi cấu trúc quan trọng (v19.0): tactic *Defense Evasion* được tách; xuất hiện tactic **Defense Impairment (TA0112)** và tactic **Stealth** (ví dụ T1070 nay thuộc Stealth). Stealth = **TA0005** (xác minh bằng STIX ngày 28/10/2026).
 
 ### 4.2. `ATTACK_MAP` (kết quả đối chiếu)
 
@@ -242,7 +242,10 @@ Ghi chú: điểm giảm mạnh vì `UK` = 0.5 là trọng số chính thức; �
 | Baseline bị sửa | T1565.001 | **T1565.001** | Data Manipulation: Stored Data Manipulation | Impact (TA0040) | ✔ | Đã xác minh, v1.1 |
 | (Dự phòng) Tắt ghi log | — (v7.1 ghi T1562.002) | **T1685.001** | Disable or Modify Windows Event Log | Defense Impairment | ✔ | Đã xác minh tên/ID. Chưa có detector. |
 
-**Còn phải xác minh bằng STIX khi code:** quan hệ `revoked-by` chính thức của T1070.001, T1562.001, T1562.002, T1562.004; mã TA của Stealth. Nếu STIX cho kết quả khác bảng trên → cập nhật bảng trước rồi mới sửa code.
+**Kết quả đối chiếu STIX v20.0 (P1, 28/10/2026)** — file `enterprise-attack.json` tag `ATT&CK-v20.0`, SHA-256 `66f3fe3f07ef1a2de0bd2fe4b3e8a9ea06c1d0bb2c46171bdbb57c7f7b666524`:
+- Quan hệ `revoked-by` chính thức: T1070.001 → T1685.005; T1562.001 → T1685; T1562.002 → T1685.001; T1562.004 → T1686 (WinGuard dùng sub-technique T1686.003, còn hiệu lực).
+- Mọi mã trong `ATTACK_MAP`: `revoked = False`, `deprecated = False`, nền tảng có Windows; tên và tactic khớp bảng trên.
+- T1685.007 *Impair Autonomous Defenses* mô tả việc phá hệ thống phòng thủ dùng LLM → đúng là không dùng cho Defender.
 
 ### 4.2a. Ứng viên tham khảo chưa xác nhận (`ATTACK_CANDIDATES`)
 - Bảng riêng, tách khỏi `ATTACK_MAP`; mỗi mục có `technique`, `reason`, `status = "unconfirmed"`.
@@ -515,6 +518,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 27/10/2026 | `80fa1c1` | `python -m simulator.benchmark --runs 3` (Admin) | 18/18 phát hiện; 0 cảnh báo quét sạch; spray v1 0/3, v2 3/3 | Trước khi đổi mapping v20.0 |
 | 28/10/2026 | `80fa1c1` (mốc P0, nhánh `feature/v7.2-cwss`) | `python -m unittest discover -s tests -t . -v` | 42 test: 34 đạt, 8 `expectedFailure` (KNOWN-ISSUE-1…7), 0 lỗi | P0: chưa sửa code ứng dụng. HEAD đã kiểm tra = `80fa1c173b5a…`, cây làm việc sạch (chỉ có file chưa theo dõi: kế hoạch, `winguard/cwss.py` placeholder) |
 
+| 28/10/2026 | P1 | `python -m unittest discover -s tests -t . -v` | 48 test: 41 đạt, 7 `expectedFailure`, 0 lỗi | KNOWN-ISSUE-1 sửa xong; KNOWN-ISSUE-2, -3 sửa phần mã ATT&CK. 4 test `tests/current` cập nhật có chủ đích (1102, firewall, Defender, UAC) |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
@@ -523,9 +527,9 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 
 | Mã | Mô tả | Test liên quan | Bước sửa | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
-| KNOWN-ISSUE-1 | Event 1102 gắn `T1070.001` — STIX v20.0: `revoked-by` T1685.005 | `current/test_regression.py::Evasion.test_1102_high`, `spec/test_attack_mapping.py::Event1102.test_1102_maps_to_v20` | P1 | Đã xác nhận bằng test (P0) |
-| KNOWN-ISSUE-2 | Cảnh báo UAC tắt gắn `T1548.002` (trái QĐ1) | `current/...ConfigAudit.test_uac_off`, `spec/test_attack_mapping.py::ConfigReferences.test_uac_has_no_direct_attack_mapping` | P1 + P2 | Đã xác nhận (P0) |
-| KNOWN-ISSUE-3 | Firewall gắn `T1562.004`, Defender gắn `T1562.001` — STIX v20.0: `revoked-by` T1686 / T1685 | `current/...test_any_firewall_profile_off_is_high`, `test_defender_off`; `spec/test_attack_mapping.py::ConfigReferences` | P1 + P2 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-1 | Event 1102 gắn `T1070.001` — STIX v20.0: `revoked-by` T1685.005 | `current/test_regression.py::Evasion.test_1102_high`, `spec/test_attack_mapping.py::Event1102.test_1102_maps_to_v20` | P1 | **Đã sửa (P1)** |
+| KNOWN-ISSUE-2 | Cảnh báo UAC tắt gắn `T1548.002` (trái QĐ1) | `current/...ConfigAudit.test_uac_off`, `spec/test_attack_mapping.py::ConfigReferences.test_uac_has_no_direct_attack_mapping` | P1 + P2 | P1: bỏ mã ATT&CK — xong; P2: CWE + ứng viên |
+| KNOWN-ISSUE-3 | Firewall gắn `T1562.004`, Defender gắn `T1562.001` — STIX v20.0: `revoked-by` T1686 / T1685 | `current/...test_any_firewall_profile_off_is_high`, `test_defender_off`; `spec/test_attack_mapping.py::ConfigReferences` | P1 + P2 | P1: đổi mã sang T1686.003 / T1685 — xong; spec test còn chờ trường `pillar` (P2) |
 | KNOWN-ISSUE-4 | Firewall cảnh báo HIGH cho **mọi** profile tắt, không xét profile đang hoạt động | `current/...test_any_firewall_profile_off_is_high`, `spec/test_firewall.py` | P4 | Đã xác nhận (P0) |
 | KNOWN-ISSUE-5 | Ngưỡng mật khẩu viết cứng 8, không theo profile | `current/...test_min_password_hardcoded_8`, `spec/test_password_profile.py` | P4 | Đã xác nhận (P0) |
 | KNOWN-ISSUE-6 | `parse_event` không giữ `Computer`, `EventRecordID` | `current/...EventLogParser.test_parse`, `spec/test_clustering.py` | P4 | Đã xác nhận (P0) |
@@ -561,7 +565,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 **Quyết định đã chốt (chưa triển khai):** QĐ1 bỏ T1548.002 khỏi cảnh báo UAC; QĐ2 kiểm tra CWSS thủ công bởi người; QĐ3 giữ thứ tự P0 → P8.
 
 - [x] **P0 Test nền:** 42 test (34 đạt, 8 `expectedFailure`), chạy 28/10/2026 tại mốc `80fa1c1`, kết quả ở §14; 7 lỗi đã biết ở §14.1.
-- [ ] **§4 ATT&CK v20.0:** đối chiếu trang web xong (28/10/2026); còn: STIX `revoked-by`, mã TA Stealth, sửa code (gồm bỏ T1548.002 khỏi UAC theo QĐ1), test.
+- [x] **§4 ATT&CK v20.0 (P1):** STIX đã đối chiếu; `winguard/attack.py` (`ATTACK_MAP`, `ATTACK_CANDIDATES`, `ATTACK_LEGACY`); detector + benchmark lấy mã từ bảng; bỏ T1548.002 khỏi cảnh báo UAC; test ở §14. (Hiển thị phiên bản trong báo cáo: làm ở P7.)
 - [ ] **§2 Luồng bằng chứng:** thiết kế xong; còn code + test.
 - [ ] **§3 CWSS:** AI đã trích công thức + trọng số (28/10/2026, không tính là xác minh); còn: **kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1, code + test.
 - [ ] **§9 Firewall/UAC/Defender:** thiết kế xong; còn: chạy thử SecurityCenter2, code + test.
@@ -573,8 +577,8 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 
 1. Bảng trọng số CWSS do AI trích bằng công cụ đọc web; kiểm tra thủ công bởi người: **`PENDING`** (§3.2a).
 2. Ví dụ CWSS 4.1: mâu thuẫn BI (0.9 trong vector, 1.0 theo Env) — chưa giải thích; **`PENDING`** kiểm tra thủ công. Ví dụ 4.2 là chuẩn chính.
-3. Quan hệ `revoked-by` chính thức của T1070.001, T1562.001, T1562.002, T1562.004 trong STIX v20.0 — chưa đọc; bảng §4.2 dựa trên trang kỹ thuật + changelog.
-4. Mã TA của tactic Stealth — chưa xác minh.
+3. ~~`revoked-by` trong STIX v20.0~~ — **đã xác minh ở P1** (§4.2).
+4. ~~Mã TA của Stealth~~ — **TA0005**, đã xác minh ở P1.
 5. ~~T1548.002 cho "UAC đang tắt"~~ — **đã quyết (QĐ1)**: không gắn; chỉ là ứng viên chưa xác nhận.
 6. Số hiệu CIS Rec. 1.1.4 và khuyến nghị lockout — cần đối chiếu PDF CIS v3.0.0.
 7. Lựa chọn CWE (CWE-284 hay CWE-693 cho firewall, CWE-250 cho UAC…) — tất cả `cwe_status = "proposed"`, chưa xác minh.
