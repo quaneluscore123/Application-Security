@@ -3,7 +3,7 @@
 Điểm mù giám sát (không biết trạng thái) cũng là rủi ro: thay vì im lặng
 trả về rỗng rồi tính như "an toàn", WinGuard báo UNKNOWN và trừ điểm.
 """
-from winguard.models import Alert
+from winguard.models import NEEDS_REVIEW, Alert
 
 
 def detect(cfg: dict) -> list[Alert]:
@@ -13,5 +13,6 @@ def detect(cfg: dict) -> list[Alert]:
             "UNKNOWN", f"Không thu thập được dữ liệu: {name}",
             "Collector lỗi hoặc trả về rỗng; không thể kết luận trạng thái mục này.",
             "Chạy lại bằng quyền Administrator; kiểm tra PowerShell và dịch vụ liên quan.",
-            category="config"))
+            category="config", pillar=NEEDS_REVIEW, root_cause="COLLECTOR_ERROR",
+            evidence={"collector": name, "review_code": "COLLECTOR_ERROR"}))
     return alerts

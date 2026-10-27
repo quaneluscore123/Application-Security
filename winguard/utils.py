@@ -2,6 +2,7 @@
 import ctypes
 import json
 import subprocess
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -46,6 +47,12 @@ def powershell(script: str) -> subprocess.CompletedProcess:
     return subprocess.run(["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
                           capture_output=True, text=True, encoding="oem", errors="replace",
                           stdin=subprocess.DEVNULL)
+
+
+def round_half_up(value, digits: int = 1) -> float:
+    """Làm tròn kiểu 0.05 -> 0.1 (không phải làm tròn chẵn của round()), dùng chung cho mọi điểm."""
+    exp = Decimal(1).scaleb(-digits)
+    return float(Decimal(str(value)).quantize(exp, rounding=ROUND_HALF_UP))
 
 
 def save_json(name: str, obj) -> Path:

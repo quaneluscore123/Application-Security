@@ -18,10 +18,14 @@ def _parse_time(value: str) -> datetime:
 def parse_event(xml_str: str) -> dict:
     root = ET.fromstring(xml_str)
     system = root.find("e:System", NS)
+    record = system.findtext("e:EventRecordID", default="", namespaces=NS)
     return {
         "id": int(system.find("e:EventID", NS).text),
         "time": _parse_time(system.find("e:TimeCreated", NS).get("SystemTime")),
         "data": {d.get("Name"): (d.text or "") for d in root.iterfind("e:EventData/e:Data", NS)},
+        # Định danh máy và bản ghi: dùng để gom cụm theo máy và khử trùng (kế hoạch §6)
+        "computer": system.findtext("e:Computer", default="", namespaces=NS) or None,
+        "record_id": int(record) if record.isdigit() else None,
     }
 
 

@@ -8,7 +8,7 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 
-from winguard import integrity, reporter, scoring
+from winguard import integrity, priority, profiles, reporter, scoring
 from winguard.collectors import config, eventlog
 from winguard.detectors import (accounts, bruteforce, collector_health, config_audit,
                                 evasion, persistence)
@@ -36,14 +36,15 @@ RULESETS = ("v1", "v2")
 
 
 def analyze(hours: int | None, include_events: bool = True,
-            since: datetime | None = None, rules: str = "v2"):
+            since: datetime | None = None, rules: str = "v2",
+            profile: str = profiles.DEFAULT_PROFILE):
     new_rules = rules == "v2"
     cfg = config.collect()
-    alerts = config_audit.detect(cfg)
+    alerts = config_audit.detect(cfg, profile)
     if new_rules:
         alerts += collector_health.detect(cfg)  # collector lỗi -> UNKNOWN (cả baseline lẫn scan)
     if not include_events:
-        return cfg, alerts
+        return cfg, priority.assign(alerts)
     events = []
     if is_admin():
         since = since or scan_start(hours)
@@ -60,7 +61,7 @@ def analyze(hours: int | None, include_events: bool = True,
     baseline_cfg = baseline["config"] if baseline else None
     alerts += accounts.detect(events, cfg, baseline_cfg)
     alerts += persistence.detect(events, cfg, baseline_cfg)
-    return cfg, alerts
+    return cfg, priority.assign(alerts)
 
 
 def save_baseline(cfg: dict, score: int) -> None:
@@ -78,24 +79,28 @@ def main() -> None:
                         help="số giờ log cần quét (mặc định: từ lần chạy simulator gần nhất, hoặc 1 giờ)")
     parser.add_argument("--rules", choices=RULESETS, default="v2",
                         help="bộ luật: v1 = trước khi vá, v2 = hiện tại (mặc định)")
+    parser.add_argument("--profile", choices=sorted(profiles.PROFILES), default=profiles.DEFAULT_PROFILE,
+                        help=f"ngưỡng cấu hình (mặc định {profiles.DEFAULT_PROFILE}; "
+                             "CIS_WINDOWS_11_ENTERPRISE_V3_L1 = ngưỡng CIS)")
     args = parser.parse_args()
 
     # Baseline chỉ đo cấu hình; sự kiện tấn công cũ không được tính vào trạng thái "bình thường"
-    cfg, alerts = analyze(args.hours, include_events=args.scan, rules=args.rules)
+    cfg, alerts = analyze(args.hours, include_events=args.scan, rules=args.rules, profile=args.profile)
     score = scoring.score(alerts)
 
     if args.baseline:
         save_baseline(cfg, score)
-        reporter.print_console(alerts, score)
+        reporter.print_console(alerts, score, profile=args.profile)
         print("Đã lưu baseline (đã ký HMAC) vào data/baseline.json")
         return
 
     baseline = load_json("baseline.json")
     base_score = baseline["score"] if baseline else None
-    save_json("alerts.json", {"time": datetime.now(), "score": score,
-                              "alerts": [a.to_dict() for a in alerts]})
-    reporter.print_console(alerts, score, base_score)
-    print(f"Báo cáo HTML: {reporter.write_html(alerts, score, base_score)}")
+    # Console, HTML và alerts.json sinh từ cùng một báo cáo
+    report = reporter.build_report(alerts, score, base_score, args.profile)
+    save_json("alerts.json", report)
+    reporter.print_console(alerts, score, report=report)
+    print(f"Báo cáo HTML: {reporter.write_html(alerts, score, report=report)}")
 
 
 if __name__ == "__main__":

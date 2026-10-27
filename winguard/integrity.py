@@ -10,11 +10,12 @@ import hmac
 import json
 import secrets
 
-from winguard.models import Alert
+from winguard.attack import label
+from winguard.models import NEEDS_REVIEW, Alert
 from winguard.utils import DATA_DIR
 
 KEY_FILE = "baseline.key"
-MITRE = "T1565.001 Stored Data Manipulation"
+MITRE = label("T1565.001")
 
 
 def _canon(config) -> bytes:
@@ -63,7 +64,11 @@ def check(baseline: dict | None) -> list[Alert]:
     if result is None:
         return [Alert("UNKNOWN", "Baseline chưa được ký (không kiểm tra được toàn vẹn)",
                       "Thiếu chữ ký HMAC hoặc khóa data/baseline.key.",
-                      "Chạy lại: python -m winguard --baseline", MITRE, "config")]
+                      "Chạy lại: python -m winguard --baseline", MITRE, "config",
+                      pillar=NEEDS_REVIEW, root_cause="BASELINE_UNSIGNED",
+                      evidence={"review_code": "BASELINE_UNSIGNED"})]
     return [Alert("HIGH", "Baseline đã bị sửa (chữ ký HMAC không khớp)",
                   "Nội dung baseline.json không khớp chữ ký đã lưu -> không còn đáng tin.",
-                  "Chạy lại baseline trên máy sạch: python -m winguard --baseline", MITRE, "config")]
+                  "Chạy lại baseline trên máy sạch: python -m winguard --baseline", MITRE, "config",
+                  pillar=NEEDS_REVIEW, root_cause="HMAC_MISMATCH",
+                  evidence={"review_code": "HMAC_MISMATCH"})]
