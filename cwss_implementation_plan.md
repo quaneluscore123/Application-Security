@@ -445,7 +445,7 @@ $$\text{Posture} = \max\left(0,\ 100 - \text{Peak CWSS} - 0.1 \times \sum_{k \in
 ## 13. Bộ Kiểm thử, Benchmark & Báo cáo
 
 ### 13.1. Bộ kiểm thử
-- `unittest` (thư viện chuẩn); lệnh: `python -m unittest discover -s tests -v`. Không cần quyền Admin.
+- `unittest` (thư viện chuẩn); lệnh: `python -m unittest discover -s tests -t . -v`. Không cần quyền Admin.
 
 **Hai loại test (QĐ3):**
 
@@ -513,7 +513,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | Ngày | Commit | Lệnh | Kết quả (đạt/tổng) | Ghi chú |
 | :--- | :--- | :--- | :--- | :--- |
 | 27/10/2026 | `80fa1c1` | `python -m simulator.benchmark --runs 3` (Admin) | 18/18 phát hiện; 0 cảnh báo quét sạch; spray v1 0/3, v2 3/3 | Trước khi đổi mapping v20.0 |
-| — | — | `python -m unittest discover -s tests -v` | **Chưa chạy** | Chưa có `tests/` (chờ duyệt kế hoạch) |
+| 28/10/2026 | `80fa1c1` (mốc P0, nhánh `feature/v7.2-cwss`) | `python -m unittest discover -s tests -t . -v` | 42 test: 34 đạt, 8 `expectedFailure` (KNOWN-ISSUE-1…7), 0 lỗi | P0: chưa sửa code ứng dụng. HEAD đã kiểm tra = `80fa1c173b5a…`, cây làm việc sạch (chỉ có file chưa theo dõi: kế hoạch, `winguard/cwss.py` placeholder) |
 
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
@@ -523,9 +523,13 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 
 | Mã | Mô tả | Test liên quan | Bước sửa | Trạng thái |
 | :--- | :--- | :--- | :--- | :--- |
-| *(chưa có — điền ở P0 khi viết test)* | | | | |
-
-Ứng viên đã nhận diện khi rà soát (P0 phải xác nhận bằng test trước khi ghi thành lỗi): firewall cảnh báo mọi profile tắt kể cả không active; ngưỡng mật khẩu hard-code 8; cảnh báo UAC gắn T1548.002; Event 1102 gắn T1070.001 (mã không còn trong v20.0); collector không giữ `Computer`/`EventRecordID`.
+| KNOWN-ISSUE-1 | Event 1102 gắn `T1070.001` — STIX v20.0: `revoked-by` T1685.005 | `current/test_regression.py::Evasion.test_1102_high`, `spec/test_attack_mapping.py::Event1102.test_1102_maps_to_v20` | P1 | Đã xác nhận bằng test (P0) |
+| KNOWN-ISSUE-2 | Cảnh báo UAC tắt gắn `T1548.002` (trái QĐ1) | `current/...ConfigAudit.test_uac_off`, `spec/test_attack_mapping.py::ConfigReferences.test_uac_has_no_direct_attack_mapping` | P1 + P2 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-3 | Firewall gắn `T1562.004`, Defender gắn `T1562.001` — STIX v20.0: `revoked-by` T1686 / T1685 | `current/...test_any_firewall_profile_off_is_high`, `test_defender_off`; `spec/test_attack_mapping.py::ConfigReferences` | P1 + P2 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-4 | Firewall cảnh báo HIGH cho **mọi** profile tắt, không xét profile đang hoạt động | `current/...test_any_firewall_profile_off_is_high`, `spec/test_firewall.py` | P4 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-5 | Ngưỡng mật khẩu viết cứng 8, không theo profile | `current/...test_min_password_hardcoded_8`, `spec/test_password_profile.py` | P4 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-6 | `parse_event` không giữ `Computer`, `EventRecordID` | `current/...EventLogParser.test_parse`, `spec/test_clustering.py` | P4 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-7 | Defender: RTP tắt → HIGH mà không kiểm tra AV khác (SecurityCenter2) | `current/...test_defender_off`, `spec/test_defender.py` | P4 | Đã xác nhận (P0) |
 
 ---
 
@@ -556,7 +560,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 
 **Quyết định đã chốt (chưa triển khai):** QĐ1 bỏ T1548.002 khỏi cảnh báo UAC; QĐ2 kiểm tra CWSS thủ công bởi người; QĐ3 giữ thứ tự P0 → P8.
 
-- [ ] **P0 Test nền:** chưa viết.
+- [x] **P0 Test nền:** 42 test (34 đạt, 8 `expectedFailure`), chạy 28/10/2026 tại mốc `80fa1c1`, kết quả ở §14; 7 lỗi đã biết ở §14.1.
 - [ ] **§4 ATT&CK v20.0:** đối chiếu trang web xong (28/10/2026); còn: STIX `revoked-by`, mã TA Stealth, sửa code (gồm bỏ T1548.002 khỏi UAC theo QĐ1), test.
 - [ ] **§2 Luồng bằng chứng:** thiết kế xong; còn code + test.
 - [ ] **§3 CWSS:** AI đã trích công thức + trọng số (28/10/2026, không tính là xác minh); còn: **kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1, code + test.
