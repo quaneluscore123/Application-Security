@@ -8,11 +8,12 @@ CWSS_SOURCE = "https://cwe.mitre.org/cwss/cwss_v1.0.1.html"
 CWSS_EXTRACTED = {"by": "AI (công cụ đọc web)", "date": "2026-10-28"}
 
 # Kết quả do người kiểm tra báo lại (AI chỉ ghi chép, không tự kiểm tra). Ảnh trong docs/audit/ do người
-# kiểm tra chụp. Trạng thái chung giữ PENDING cho tới khi đủ hồ sơ (còn thiếu ảnh Example 4.1).
+# kiểm tra chụp. VERIFIED: công thức + bảng trọng số khớp nguồn; mâu thuẫn của Example 4.1 nằm trong
+# chính tài liệu MITRE (ghi ở example_4_1), không phải sai lệch giữa nguồn và code.
 CWSS_MANUAL_CHECK = {
-    "status": "PENDING",        # PENDING | VERIFIED | DISCREPANCY
+    "status": "VERIFIED",       # PENDING | VERIFIED | DISCREPANCY
     "reviewer": "Hoàng Minh Quân",
-    "date": "2026-10-27",       # theo người kiểm tra báo
+    "date": "2026-10-28",       # ban đầu báo 27/10; sửa thành 28/10 với sự đồng ý của người kiểm tra
     "source_url": CWSS_SOURCE,
     "formulas": "MATCH",
     "weight_table": "MATCH",
@@ -22,7 +23,9 @@ CWSS_MANUAL_CHECK = {
                                "AS:N,1.0/IN:T,0.9/SC:A,1.0/BI:C,0.9/DI:H,1.0/EX:H,1.0/EC:N,1.0/P:NA,1.0)",
         "base": 96.0, "attack_surface": 0.965, "environmental": 1.0, "score": 92.6,
         "bi_value_in_vector": 0.9,
-        "screenshot": "PENDING",
+        "bi_value_in_calculation": 1.0,  # phần tính của tài liệu: (10*1.0 + 3*1.0 + 4*1.0 + 3*1.0)
+        "screenshot": "docs/audit/cwss_example_4_1.png",
+        "calculation_screenshot": "docs/audit/cwss_example_4_1_calculation.png",
     },
     "example_4_2": {
         "status": "MATCH",
@@ -37,8 +40,9 @@ CWSS_MANUAL_CHECK = {
     "notes": "Ví dụ 4.1: vector in BI:C,0.9 nhưng bảng trọng số ghi C = 1.0 và Environmental = 1.0, "
              "điểm 92.6 chỉ đúng với BI = 1.0 (với 0.9: Env 0.95, điểm 88.0). "
              "Mã Unknown của AV là U (khác UK của các metric khác) - đã xác nhận bằng ảnh "
-             "docs/audit/cwss_weights_av.png. Ảnh bảng trọng số mới có AV và TI. "
-             "Còn thiếu: ảnh Example 4.1 (docs/audit/cwss_example_4_1.png).",
+             "docs/audit/cwss_weights_av.png. Ảnh bảng trọng số có AV và TI; các bảng còn lại người "
+             "kiểm tra đối chiếu trực tiếp trên trang (MATCH) nhưng không chụp. "
+             "Ví dụ 4.1: phần tính trong tài liệu dùng BI = 1.0 (ảnh cwss_example_4_1_calculation.png).",
 }
 
 # metric -> {mã: trọng số}. "Q" (Quantified) không hỗ trợ.

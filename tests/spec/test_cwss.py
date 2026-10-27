@@ -129,8 +129,20 @@ class ManualCheck(unittest.TestCase):
         self.assertEqual(cwss.parse(published), cwss.parse(EXAMPLES["4.2"]["vector"]))
 
     def test_verified_requires_evidence(self):
-        fake = {**CWSS_MANUAL_CHECK, "status": "VERIFIED"}
-        self.assertTrue(manual_check_problems(fake, Path(".")))
+        incomplete = {"status": "VERIFIED", "reviewer": "PENDING", "date": "PENDING",
+                      "formulas": "MATCH", "weight_table": "MATCH",
+                      "example_4_1": {"screenshot": "PENDING"},
+                      "example_4_2": {"status": "MATCH", "screenshot": "khong_co.png"}}
+        problems = manual_check_problems(incomplete, Path("."))
+        self.assertIn("reviewer còn PENDING", problems)
+        self.assertIn("example_4_1.screenshot còn PENDING", problems)
+        self.assertTrue(any("không tồn tại" in p for p in problems))
+
+    def test_current_record_meets_verified_rules(self):
+        from winguard.utils import ROOT
+        if CWSS_MANUAL_CHECK["status"] == "VERIFIED":
+            self.assertEqual(manual_check_problems(CWSS_MANUAL_CHECK, ROOT), [])
+            self.assertEqual(manual_check_status(), "VERIFIED")
 
     def test_status_not_verified_while_pending(self):
         if CWSS_MANUAL_CHECK["status"] == "PENDING":

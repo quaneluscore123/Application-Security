@@ -150,10 +150,10 @@ Trạng thái phụ `SCORING_ERROR`: gắn **thêm** vào một phát hiện đ�
 | Ví dụ | Base | AS | Env | Điểm tài liệu | Tính lại | Kết luận |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | 4.2 (Wiki) | 84.0 | 0.935 | 0.65 | 51.1 | 51.1 | **Khớp** |
-| 4.1 (Business-critical) | 96.0 | 0.965 | 1.0 | 92.6 | 92.6 nếu BI = C = **1.0**; 88.0 nếu BI = 0.9 | **Chưa giải thích — chờ kiểm tra thủ công (§3.2a)**: bản trích vector ghi "BI:C,0.9" nhưng Env = 1.0 chỉ đúng khi BI = 1.0 |
+| 4.1 (Business-critical) | 96.0 | 0.965 | 1.0 | 92.6 | 92.6 nếu BI = C = **1.0**; 88.0 nếu BI = 0.9 | **DISCREPANCY trong tài liệu nguồn** (người kiểm tra xác nhận): vector in `BI:C,0.9` nhưng phần tính của tài liệu dùng `10*1.0` |
 
   Ví dụ 4.2 có thêm `RE:NA` (không phải metric của CWSS 1.0) — parser bỏ qua `RE` có cảnh báo, không lỗi.
-- **Trạng thái xác minh: `PENDING`.** Công thức và bảng trọng số ở trên do AI trích bằng công cụ đọc web ngày 28/10/2026. Đây **không** phải kiểm tra thủ công và không được ghi là đã xác minh.
+- **Trạng thái xác minh: `VERIFIED` (28/10/2026, người kiểm tra: Hoàng Minh Quân).** Công thức và bảng trọng số do AI trích ngày 28/10/2026, sau đó được người kiểm tra đối chiếu trực tiếp trên trang gốc: MATCH. Bằng chứng trong `docs/audit/`. Example 4.1 có mâu thuẫn trong chính tài liệu (vector in `BI:C,0.9`, phần tính dùng 1.0) — ghi `DISCREPANCY`, không sửa số.
 
 ### 3.2a. Kiểm tra thủ công bắt buộc (QĐ2)
 - **Người kiểm tra:** một thành viên nhóm, tự mở trang https://cwe.mitre.org/cwss/cwss_v1.0.1.html và đối chiếu. AI chỉ chuẩn bị checklist và ghi lại kết quả người kiểm tra báo; AI **không** điền tên ai và không tự nhận đã kiểm tra.
@@ -540,7 +540,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 01:00–01:04 | `48d0e8b` (nhánh `feature/v7.2-cwss`) | `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` (Admin, nhóm chạy) | 18/18 lần phát hiện (6 kịch bản × 3, mã ATT&CK v20.0); 0 cảnh báo sự kiện sau 3 lần quét sạch; spraying: v1 0/3, v2 3/3; `benchmark.json` ghi `attack_version = Enterprise v20.0` | Không regression so với mốc `80fa1c1` (27/10: 18/18, 0, 0/3 vs 3/3). Chỉ áp dụng cho 6 kịch bản tự mô phỏng trên một máy |
 | 28/10/2026 | `48d0e8b` | `python -m winguard --baseline` (Admin, nhóm chạy) | Baseline mới đã ký HMAC; Posture 72.5; Legacy 84/100; 2 `CONFIRMED_WEAKNESS` (lockout = 10, min password = 0, CWSS 25.0 mỗi mục), 1 `NEEDS_REVIEW` (`HP` PasswordRequired=False), 0 `ATTACK_OBSERVED` | Thay baseline 27/10 (hết 3 cảnh báo Scheduled Task "SoftLanding" do baseline lệch) |
 | 28/10/2026 | — | Kiểm tra thủ công CWSS (§3.2a) | Nhóm báo "MATCH" toàn bộ; **chưa đủ hồ sơ**: thiếu tên người kiểm tra, ngày, giá trị BI trong vector Example 4.1, mã Unknown của AV, ảnh chụp | `CWSS_MANUAL_CHECK` giữ `PENDING` cho tới khi đủ hồ sơ (QĐ2) |
-| 27/10/2026 (theo người kiểm tra) | — | Kiểm tra thủ công CWSS (§3.2a) — người kiểm tra: **Hoàng Minh Quân** | Công thức: MATCH; bảng trọng số: MATCH; Example 4.2: MATCH (84.0 / 0.935 / 0.65 / 51.1); **Example 4.1: DISCREPANCY** — vector trên trang gốc in `BI:C,0.9`, trong khi Env = 1.0 và điểm 92.6 chỉ đúng với BI = 1.0 | Đã ghi vào `CWSS_MANUAL_CHECK`. Bổ sung 28/10: mã Unknown của AV = **`U`** (ảnh `docs/audit/cwss_weights_av.png`; TI dùng `UK`, ảnh `cwss_weights_ti.png`); vector nguyên văn Example 4.2 + ảnh `cwss_example_4_2.png`; phần ví dụ 4.2 không giải thích `RE:NA`. Trạng thái chung vẫn `PENDING`: **còn thiếu ảnh Example 4.1** |
+| 28/10/2026 (ban đầu báo 27/10, sửa với sự đồng ý của người kiểm tra) | — | Kiểm tra thủ công CWSS (§3.2a) — người kiểm tra: **Hoàng Minh Quân** | Công thức: MATCH; bảng trọng số: MATCH; Example 4.2: MATCH (84.0 / 0.935 / 0.65 / 51.1); **Example 4.1: DISCREPANCY** — vector trên trang gốc in `BI:C,0.9`, trong khi Env = 1.0 và điểm 92.6 chỉ đúng với BI = 1.0 | Đã ghi vào `CWSS_MANUAL_CHECK`. Bổ sung 28/10: mã Unknown của AV = **`U`** (ảnh `docs/audit/cwss_weights_av.png`; TI dùng `UK`, ảnh `cwss_weights_ti.png`); vector nguyên văn Example 4.2 + ảnh `cwss_example_4_2.png`; phần ví dụ 4.2 không giải thích `RE:NA`. Bổ sung ảnh Example 4.1 (`cwss_example_4_1.png`) và phần tính của tài liệu (`cwss_example_4_1_calculation.png`: dùng `10*1.0` cho BI) → **`VERIFIED`** (172→175 test đạt) |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do (cập nhật 28/10/2026):** (1) ~~benchmark sau thay đổi~~ — **đã chạy 28/10/2026 01:00 (xem bảng)**; trước đó: cần quyền Administrator, AI không có; nhóm chạy `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` → `tools
@@ -590,7 +590,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **P0 Test nền:** 42 test (34 đạt, 8 `expectedFailure`), chạy 28/10/2026 tại mốc `80fa1c1`, kết quả ở §14; 7 lỗi đã biết ở §14.1.
 - [x] **§4 ATT&CK v20.0 (P1):** STIX đã đối chiếu; `winguard/attack.py` (`ATTACK_MAP`, `ATTACK_CANDIDATES`, `ATTACK_LEGACY`); detector + benchmark lấy mã từ bảng; bỏ T1548.002 khỏi cảnh báo UAC; test ở §14. (Hiển thị phiên bản trong báo cáo: làm ở P7.)
 - [x] **§2 Luồng bằng chứng (P2):** `winguard/evidence.py`, `winguard/cwe_map.py`, trường mới trong `Alert`, `config_audit` chạy qua luồng; `tests/spec/test_evidence_pipeline.py`; kết quả ở §14.
-- [ ] **§3 CWSS:** code + test xong ở P3 (`cwss.py`, `cwss_weights.py`, `cwss_vectors.py`, `tests/spec/test_cwss.py`); **còn: kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1. Chưa được đánh dấu hoàn tất.
+- [x] **§3 CWSS:** code + test (P3); kiểm tra thủ công `VERIFIED` 28/10/2026 bởi Hoàng Minh Quân, bằng chứng `docs/audit/`; Ví dụ 4.1 ghi nhận `DISCREPANCY` trong tài liệu nguồn, Ví dụ 4.2 là chuẩn chính.
 - [x] **§9 Firewall/UAC/Defender (P4):** collector + luật + `tests/spec/test_firewall.py`, `test_defender.py`, `test_collectors.py`; SecurityCenter2 đã chạy thử trên máy lab; kết quả ở §14.
 - [x] **§8 Profile mật khẩu (P4):** `winguard/profiles.py`, `--profile`, `tests/spec/test_password_profile.py`; kết quả ở §14.
 - [x] **§5 Incident Severity (P5):** `incident.py` (miền, half-up, không ép 100, breakdown T/C/W); `tests/spec/test_incident_severity.py`.
@@ -607,7 +607,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 
 ## 16. Giả định & Điểm Chưa Xác minh
 
-1. Bảng trọng số CWSS do AI trích bằng công cụ đọc web; kiểm tra thủ công bởi người: **`PENDING`** (§3.2a).
+1. ~~Bảng trọng số CWSS~~ — **`VERIFIED`** 28/10/2026 (Hoàng Minh Quân); ảnh chụp có bảng AV, TI và hai ví dụ, các bảng khác đối chiếu trực tiếp không chụp.
 2. Ví dụ CWSS 4.1: người kiểm tra **xác nhận** vector trên trang gốc in `BI:C,0.9` trong khi Env = 1.0 → mâu thuẫn trong chính tài liệu nguồn (ghi `DISCREPANCY`, không sửa số). Ví dụ 4.2 là chuẩn chính.
 3. ~~`revoked-by` trong STIX v20.0~~ — **đã xác minh ở P1** (§4.2).
 4. ~~Mã TA của Stealth~~ — **TA0005**, đã xác minh ở P1.
