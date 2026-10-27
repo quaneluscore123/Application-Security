@@ -8,7 +8,7 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 
-from winguard import integrity, reporter, scoring
+from winguard import integrity, profiles, reporter, scoring
 from winguard.collectors import config, eventlog
 from winguard.detectors import (accounts, bruteforce, collector_health, config_audit,
                                 evasion, persistence)
@@ -36,10 +36,11 @@ RULESETS = ("v1", "v2")
 
 
 def analyze(hours: int | None, include_events: bool = True,
-            since: datetime | None = None, rules: str = "v2"):
+            since: datetime | None = None, rules: str = "v2",
+            profile: str = profiles.DEFAULT_PROFILE):
     new_rules = rules == "v2"
     cfg = config.collect()
-    alerts = config_audit.detect(cfg)
+    alerts = config_audit.detect(cfg, profile)
     if new_rules:
         alerts += collector_health.detect(cfg)  # collector lỗi -> UNKNOWN (cả baseline lẫn scan)
     if not include_events:
@@ -78,10 +79,13 @@ def main() -> None:
                         help="số giờ log cần quét (mặc định: từ lần chạy simulator gần nhất, hoặc 1 giờ)")
     parser.add_argument("--rules", choices=RULESETS, default="v2",
                         help="bộ luật: v1 = trước khi vá, v2 = hiện tại (mặc định)")
+    parser.add_argument("--profile", choices=sorted(profiles.PROFILES), default=profiles.DEFAULT_PROFILE,
+                        help=f"ngưỡng cấu hình (mặc định {profiles.DEFAULT_PROFILE}; "
+                             "CIS_WINDOWS_11_ENTERPRISE_V3_L1 = ngưỡng CIS)")
     args = parser.parse_args()
 
     # Baseline chỉ đo cấu hình; sự kiện tấn công cũ không được tính vào trạng thái "bình thường"
-    cfg, alerts = analyze(args.hours, include_events=args.scan, rules=args.rules)
+    cfg, alerts = analyze(args.hours, include_events=args.scan, rules=args.rules, profile=args.profile)
     score = scoring.score(alerts)
 
     if args.baseline:

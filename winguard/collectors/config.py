@@ -29,6 +29,24 @@ def firewall_profiles() -> dict:
     return {p["Name"]: p["Enabled"] for p in data}
 
 
+def network_profiles() -> list[dict] | None:
+    """Kết nối mạng đang hoạt động. NetworkCategory đổi sang tên (PowerShell trả số 0/1/2 nếu để nguyên)."""
+    return powershell_json(
+        "@(Get-NetConnectionProfile | Select-Object InterfaceAlias,InterfaceIndex,"
+        "@{n='NetworkCategory';e={$_.NetworkCategory.ToString()}})"
+    )
+
+
+def security_center() -> dict | None:
+    """Sản phẩm chống mã độc / firewall đăng ký với Windows Security Center. Lỗi WMI -> None."""
+    query = ("Get-CimInstance -Namespace root/SecurityCenter2 -ClassName {} -ErrorAction Stop | "
+             "Select-Object displayName,productState")
+    return powershell_json(
+        f"[pscustomobject]@{{antivirus = @({query.format('AntiVirusProduct')}); "
+        f"firewall = @({query.format('FirewallProduct')})}}"
+    )
+
+
 def defender_status() -> dict:
     data = powershell_json(
         "Get-MpComputerStatus | Select-Object RealTimeProtectionEnabled,AntivirusEnabled,AntivirusSignatureAge"
@@ -50,7 +68,8 @@ ADMINS_SID = "S-1-5-32-544"  # nhóm Administrators, cố định trên mọi ng
 
 def local_users() -> list[dict]:
     return powershell_json(
-        "@(Get-CimInstance Win32_UserAccount -Filter 'LocalAccount=True' | Select-Object Name,SID,Disabled)"
+        "@(Get-CimInstance Win32_UserAccount -Filter 'LocalAccount=True' | "
+        "Select-Object Name,SID,Disabled,PasswordRequired)"
     ) or []
 
 
@@ -73,20 +92,26 @@ def collect() -> dict:
     (thay vì im lặng trả rỗng) để WinGuard báo UNKNOWN và trừ điểm."""
     cfg: dict = {}
     errors: list[str] = []
+    status: dict[str, str] = {}  # ok | empty | error - để luật phân biệt "rỗng" với "lỗi"
 
     def grab(name, fn, empty, required=True):
         try:
             value = fn()
         except Exception as exc:  # noqa: BLE001 - mọi lỗi collector đều thành UNKNOWN
             errors.append(f"{name} ({type(exc).__name__})")
+            status[name] = "error"
             return empty
         if value is None or (required and len(value) == 0):
             errors.append(name)
+            status[name] = "error" if value is None else "empty"
             return empty if value is None else value
+        status[name] = "ok" if len(value) else "empty"
         return value
 
     cfg["accounts_policy"] = grab("accounts_policy", net_accounts, {})
     cfg["firewall"] = grab("firewall", firewall_profiles, {})
+    cfg["network_profiles"] = grab("network_profiles", network_profiles, [], required=False)
+    cfg["security_center"] = grab("security_center", security_center, {})
     cfg["defender"] = grab("defender", defender_status, {})
     cfg["local_users"] = grab("local_users", local_users, [])
     cfg["admin_members"] = grab("admin_members", admin_members, [])
@@ -101,5 +126,7 @@ def collect() -> dict:
         errors.append("uac_enabled")
     cfg["uac_enabled"] = uac
 
+    status["uac_enabled"] = "error" if uac is None else "ok"
     cfg["_errors"] = errors
+    cfg["_status"] = status
     return cfg

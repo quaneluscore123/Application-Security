@@ -146,35 +146,54 @@ class Persistence(unittest.TestCase):
 
 
 class ConfigAudit(unittest.TestCase):
-    def test_clean_config_no_alert(self):
-        self.assertEqual(config_audit.detect(base_cfg()), [])
+    """Cập nhật có chủ đích ở P4: ngưỡng theo profile (KNOWN-ISSUE-5), firewall theo profile đang
+    hoạt động (KNOWN-ISSUE-4), Defender kiểm tra SecurityCenter2 (KNOWN-ISSUE-7)."""
+    LAB = "WINGUARD_LAB"
 
-    def test_min_password_hardcoded_8(self):
-        # KNOWN-ISSUE-5: ngưỡng 8 viết cứng, không theo profile
+    def lan(self, **over):
+        cfg = base_cfg(network_profiles=[{"InterfaceAlias": "Wi-Fi", "NetworkCategory": "Private"}],
+                       security_center={"antivirus": [], "firewall": []})
+        cfg.update(over)
+        return cfg
+
+    def test_clean_config_no_alert(self):
+        self.assertEqual(config_audit.detect(self.lan(), profile=self.LAB), [])
+
+    def test_no_profile_is_review_not_guess(self):
+        alerts = config_audit.detect(self.lan())
+        self.assertEqual({(a.root_cause, a.pillar) for a in alerts},
+                         {("lockout_threshold", "NEEDS_REVIEW"), ("min_password_length", "NEEDS_REVIEW")})
+
+    def test_min_password_lab_profile(self):
         policy = {"min_password_length": 7, "lockout_threshold": 5, "lockout_duration_min": 10}
-        alerts = config_audit.detect(base_cfg(accounts_policy=policy))
+        alerts = config_audit.detect(self.lan(accounts_policy=policy), profile=self.LAB)
         self.assertEqual([a.severity for a in alerts], ["MEDIUM"])
         policy["min_password_length"] = 13
-        self.assertEqual(config_audit.detect(base_cfg(accounts_policy=policy)), [])
+        self.assertEqual(config_audit.detect(self.lan(accounts_policy=policy), profile=self.LAB), [])
 
     def test_lockout_zero_high(self):
         policy = {"min_password_length": 8, "lockout_threshold": 0, "lockout_duration_min": 0}
-        self.assertEqual([a.severity for a in config_audit.detect(base_cfg(accounts_policy=policy))],
-                         ["HIGH"])
+        alerts = config_audit.detect(self.lan(accounts_policy=policy), profile=self.LAB)
+        self.assertEqual([a.severity for a in alerts], ["HIGH"])
 
-    def test_any_firewall_profile_off_is_high(self):
-        # KNOWN-ISSUE-4: không xét profile đang hoạt động. KNOWN-ISSUE-3 (mã) đã sửa ở P1: T1686.003
-        alerts = config_audit.detect(base_cfg(firewall={"Domain": False, "Private": True, "Public": True}))
+    def test_active_firewall_profile_off_is_high(self):
+        alerts = config_audit.detect(self.lan(firewall={"Domain": True, "Private": False, "Public": True}),
+                                     profile=self.LAB)
         self.assertEqual([(a.severity, a.mitre) for a in alerts], [("HIGH", label("T1686.003"))])
 
+    def test_inactive_firewall_profile_off_is_low_review(self):
+        alerts = config_audit.detect(self.lan(firewall={"Domain": False, "Private": True, "Public": True}),
+                                     profile=self.LAB)
+        self.assertEqual([(a.severity, a.pillar) for a in alerts], [("LOW", "NEEDS_REVIEW")])
+
     def test_defender_off(self):
-        # KNOWN-ISSUE-7: không kiểm tra AV khác. KNOWN-ISSUE-3 (mã) đã sửa ở P1: T1562.001 -> T1685
-        cfg = base_cfg(defender={"RealTimeProtectionEnabled": False, "AntivirusSignatureAge": 0})
-        self.assertEqual([a.mitre for a in config_audit.detect(cfg)], [label("T1685")])
+        cfg = self.lan(defender={"RealTimeProtectionEnabled": False, "AntivirusSignatureAge": 0})
+        self.assertEqual([a.mitre for a in config_audit.detect(cfg, profile=self.LAB)], [label("T1685")])
 
     def test_uac_off(self):
-        # KNOWN-ISSUE-2 (phần mã) đã sửa ở P1: không gắn T1548.002 (QĐ1); CWE/ứng viên làm ở P2
-        self.assertEqual([a.mitre for a in config_audit.detect(base_cfg(uac_enabled=False))], [""])
+        # KNOWN-ISSUE-2 đã sửa ở P1-P2: không gắn T1548.002 (QĐ1)
+        alerts = config_audit.detect(self.lan(uac_enabled=False), profile=self.LAB)
+        self.assertEqual([(a.mitre, a.cwe) for a in alerts], [("", "CWE-250")])
 
 
 class Scoring(unittest.TestCase):
@@ -192,8 +211,8 @@ class EventLogParser(unittest.TestCase):
     def test_parse(self):
         e = eventlog.parse_event(EVENT_XML)
         self.assertEqual((e["id"], e["data"]["TargetSid"]), (4720, "S-1-5-21-1-2002"))
-        # KNOWN-ISSUE-6: không giữ Computer / EventRecordID
-        self.assertEqual(set(e), {"id", "time", "data"})
+        # KNOWN-ISSUE-6 đã sửa ở P4: giữ Computer / EventRecordID
+        self.assertEqual(set(e), {"id", "time", "data", "computer", "record_id"})
 
 
 class Benchmark(unittest.TestCase):

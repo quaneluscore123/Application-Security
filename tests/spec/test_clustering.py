@@ -6,8 +6,7 @@ from winguard.collectors import eventlog
 
 
 class EventFields(unittest.TestCase):
-    @unittest.expectedFailure  # KNOWN-ISSUE-6
-    def test_parse_keeps_computer_and_record_id(self):
+    def test_parse_keeps_computer_and_record_id(self):  # KNOWN-ISSUE-6 (đã sửa ở P4)
         e = eventlog.parse_event(EVENT_XML)
         self.assertEqual((e["computer"], e["record_id"]), ("LAB-PC", 42))
 

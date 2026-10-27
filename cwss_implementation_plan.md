@@ -31,6 +31,7 @@
 | **v7.2 sửa 1 — QĐ2** | Bắt buộc **một người** đối chiếu trực tiếp trang CWSS v1.0.1 gốc (bảng trọng số + Example 4.1); ghi tên, ngày, kết quả vào `winguard/cwss_weights.py`. Chưa có người kiểm tra → `PENDING`. Example 4.2 là chuẩn chính khi 4.1 chưa giải thích được. | Bản trích bằng công cụ đọc web (do AI thực hiện) **không** thay thế việc con người kiểm tra nguồn. |
 | **P2 (triển khai)** | Chữ ký Defender cũ (> 7 ngày) chuyển sang `NEEDS_REVIEW` (không có CWE/vector); Legacy Score giữ MEDIUM. Collector lỗi ở thiết lập đã có `collector_health` báo thì `config_audit` không báo trùng. | Không có căn cứ CWE; tránh trừ điểm hai lần. |
 | **P3 (triển khai)** | Lockout > ngưỡng profile (khác 0): cùng CWE-307, `IC` = L (*có khóa nhưng ngưỡng cao*) thay vì N. Parser chỉ nhận mã Unknown `U` cho AV theo bản trích; `Q` (Quantified) không hỗ trợ. | Dữ liệu collector cho thấy có cơ chế khóa; giữ đúng mã theo bản trích cho tới khi kiểm tra thủ công. |
+| **P4 (triển khai)** | `NetworkCategory` được đổi sang tên ngay trong collector, luật vẫn chấp nhận cả số 0/1/2. Firewall tắt ở profile đang dùng nhưng có firewall khác bật → `NEEDS_REVIEW` (`OTHER_PRODUCT_ACTIVE`), tương tự Defender. Profile CIS: ngưỡng lockout để `None` (chưa đối chiếu) → `NEEDS_REVIEW`. CLI mặc định `--profile WINGUARD_LAB` (khai báo rõ, in trong báo cáo); gọi `config_audit.detect()` không có profile → `NEEDS_REVIEW`. | Không tự đoán ngưỡng; không kết luận khi có lớp bảo vệ thay thế. |
 | **v7.2 sửa 1 — QĐ3** | Giữ thứ tự P0 → P8. P0 tách *test mô tả hành vi hiện tại* với *test theo đặc tả*; lỗi có sẵn được ghi nhận, không làm yếu/xóa test. | Có mốc regression trước khi thay đổi code. |
 
 ### 0.2. Hiện trạng repository (kiểm tra trực tiếp)
@@ -523,6 +524,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 | P1 | `python -m unittest discover -s tests -t . -v` | 48 test: 41 đạt, 7 `expectedFailure`, 0 lỗi | KNOWN-ISSUE-1 sửa xong; KNOWN-ISSUE-2, -3 sửa phần mã ATT&CK. 4 test `tests/current` cập nhật có chủ đích (1102, firewall, Defender, UAC) |
 | 28/10/2026 | P2 | `python -m unittest discover -s tests -t . -v` | 60 test: 56 đạt, 4 `expectedFailure`, 0 lỗi | Luồng bằng chứng + `SCORING_ERROR`; KNOWN-ISSUE-2, -3 sửa xong. Chạy thử `analyze` (không Admin) trên máy lab: Legacy Score vẫn 84/100, 2 phát hiện `CONFIRMED_WEAKNESS` (lockout = 10 → CWE-307, min password = 0 → CWE-521) |
 | 28/10/2026 | P3 | `python -m unittest discover -s tests -t . -v` | 83 test: 79 đạt, 4 `expectedFailure`, 0 lỗi | `cwss_weights.py` (trạng thái `PENDING`), `cwss.py`, `cwss_vectors.py`. Ví dụ 4.2 khớp 51.1; 4.1 ghi nhận mâu thuẫn. Chạy thử trên máy lab: lockout = 10 → CWSS 25.0 (IC = L), min password = 0 → 25.0 |
+| 28/10/2026 | P4 | `python -m unittest discover -s tests -t . -v` | 118 test: 118 đạt, 0 `expectedFailure`, 0 lỗi | Collector `network_profiles`, `security_center`, `PasswordRequired`, `_status`; `Computer`/`EventRecordID`; profile `--profile`. KNOWN-ISSUE-4…7 sửa xong; 8 test `tests/current` (ConfigAudit, parser) cập nhật có chủ đích. Chạy thử máy lab (không Admin): SecurityCenter2 đọc được không cần Admin (Windows Defender, không có firewall khác); 4 kết nối (ZeroTier ×2, Radmin VPN = Public; Wi-Fi = Private), `NetworkCategory` trả về dạng số nếu không đổi sang tên; Legacy Score 84 (LAB), tài khoản `HP` có `PasswordRequired=False` → `NEEDS_REVIEW` |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
@@ -534,10 +536,10 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | KNOWN-ISSUE-1 | Event 1102 gắn `T1070.001` — STIX v20.0: `revoked-by` T1685.005 | `current/test_regression.py::Evasion.test_1102_high`, `spec/test_attack_mapping.py::Event1102.test_1102_maps_to_v20` | P1 | **Đã sửa (P1)** |
 | KNOWN-ISSUE-2 | Cảnh báo UAC tắt gắn `T1548.002` (trái QĐ1) | `current/...ConfigAudit.test_uac_off`, `spec/test_attack_mapping.py::ConfigReferences.test_uac_has_no_direct_attack_mapping` | P1 + P2 | **Đã sửa (P1 + P2)** |
 | KNOWN-ISSUE-3 | Firewall gắn `T1562.004`, Defender gắn `T1562.001` — STIX v20.0: `revoked-by` T1686 / T1685 | `current/...test_any_firewall_profile_off_is_high`, `test_defender_off`; `spec/test_attack_mapping.py::ConfigReferences` | P1 + P2 | **Đã sửa (P1 + P2)** |
-| KNOWN-ISSUE-4 | Firewall cảnh báo HIGH cho **mọi** profile tắt, không xét profile đang hoạt động | `current/...test_any_firewall_profile_off_is_high`, `spec/test_firewall.py` | P4 | Đã xác nhận (P0) |
-| KNOWN-ISSUE-5 | Ngưỡng mật khẩu viết cứng 8, không theo profile | `current/...test_min_password_hardcoded_8`, `spec/test_password_profile.py` | P4 | Đã xác nhận (P0) |
-| KNOWN-ISSUE-6 | `parse_event` không giữ `Computer`, `EventRecordID` | `current/...EventLogParser.test_parse`, `spec/test_clustering.py` | P4 | Đã xác nhận (P0) |
-| KNOWN-ISSUE-7 | Defender: RTP tắt → HIGH mà không kiểm tra AV khác (SecurityCenter2) | `current/...test_defender_off`, `spec/test_defender.py` | P4 | Đã xác nhận (P0) |
+| KNOWN-ISSUE-4 | Firewall cảnh báo HIGH cho **mọi** profile tắt, không xét profile đang hoạt động | `current/...test_any_firewall_profile_off_is_high`, `spec/test_firewall.py` | P4 | **Đã sửa (P4)** |
+| KNOWN-ISSUE-5 | Ngưỡng mật khẩu viết cứng 8, không theo profile | `current/...test_min_password_hardcoded_8`, `spec/test_password_profile.py` | P4 | **Đã sửa (P4)** |
+| KNOWN-ISSUE-6 | `parse_event` không giữ `Computer`, `EventRecordID` | `current/...EventLogParser.test_parse`, `spec/test_clustering.py` | P4 | **Đã sửa (P4)** |
+| KNOWN-ISSUE-7 | Defender: RTP tắt → HIGH mà không kiểm tra AV khác (SecurityCenter2) | `current/...test_defender_off`, `spec/test_defender.py` | P4 | **Đã sửa (P4)** |
 
 ---
 
@@ -572,8 +574,9 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§4 ATT&CK v20.0 (P1):** STIX đã đối chiếu; `winguard/attack.py` (`ATTACK_MAP`, `ATTACK_CANDIDATES`, `ATTACK_LEGACY`); detector + benchmark lấy mã từ bảng; bỏ T1548.002 khỏi cảnh báo UAC; test ở §14. (Hiển thị phiên bản trong báo cáo: làm ở P7.)
 - [x] **§2 Luồng bằng chứng (P2):** `winguard/evidence.py`, `winguard/cwe_map.py`, trường mới trong `Alert`, `config_audit` chạy qua luồng; `tests/spec/test_evidence_pipeline.py`; kết quả ở §14.
 - [ ] **§3 CWSS:** code + test xong ở P3 (`cwss.py`, `cwss_weights.py`, `cwss_vectors.py`, `tests/spec/test_cwss.py`); **còn: kiểm tra thủ công bởi người (`PENDING`)**, kết luận Ví dụ 4.1. Chưa được đánh dấu hoàn tất.
-- [ ] **§9 Firewall/UAC/Defender:** thiết kế xong; còn: chạy thử SecurityCenter2, code + test.
-- [ ] **§8 Profile mật khẩu**, **§5 Incident Severity**, **§6 Gom cụm**, **§7 Allowlist**, **§10 Priority**, **§11 Posture**, **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
+- [x] **§9 Firewall/UAC/Defender (P4):** collector + luật + `tests/spec/test_firewall.py`, `test_defender.py`, `test_collectors.py`; SecurityCenter2 đã chạy thử trên máy lab; kết quả ở §14.
+- [x] **§8 Profile mật khẩu (P4):** `winguard/profiles.py`, `--profile`, `tests/spec/test_password_profile.py`; kết quả ở §14.
+- [ ] **§5 Incident Severity**, **§6 Gom cụm**, **§7 Allowlist**, **§10 Priority**, **§11 Posture**, **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
 
 ---
 
@@ -587,5 +590,5 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 6. Số hiệu CIS Rec. 1.1.4 và khuyến nghị lockout — cần đối chiếu PDF CIS v3.0.0.
 7. Lựa chọn CWE (CWE-284 hay CWE-693 cho firewall, CWE-250 cho UAC…) — tất cả `cwe_status = "proposed"`, chưa xác minh.
 8. Mọi trọng số nội bộ ($T$, $C$, $W$, Impact, Uncertainty, hệ số 0.1) — chưa hiệu chỉnh thực nghiệm.
-9. `root\SecurityCenter2` (`FirewallProduct`, `AntiVirusProduct`) trên Windows 11 Home — cần chạy thử.
+9. ~~`root\SecurityCenter2` trên Windows 11 Home~~ — đã chạy thử ở P4: đọc được, không cần Admin. **Còn giả định:** cách giải mã `productState` (nhóm 4 bit thứ 4 = 1 → đang bật) là cách phổ biến, Microsoft không công bố chính thức.
 10. Đa máy chỉ kiểm thử bằng dữ liệu tổng hợp.
