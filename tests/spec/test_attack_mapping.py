@@ -67,15 +67,13 @@ class AttackMap(unittest.TestCase):
 
 
 class ConfigReferences(unittest.TestCase):
-    @unittest.expectedFailure  # KNOWN-ISSUE-3
-    def test_firewall_reference_v20(self):
+    def test_firewall_reference_v20(self):  # KNOWN-ISSUE-3 (đã sửa ở P1-P2)
         cfg = lan_cfg(firewall={"Domain": True, "Private": False, "Public": True})
         alerts = config_audit.detect(cfg, profile="WINGUARD_LAB")
         self.assertEqual([a.mitre.split()[0] for a in alerts if a.pillar == "CONFIRMED_WEAKNESS"],
                          ["T1686.003"])
 
-    @unittest.expectedFailure  # KNOWN-ISSUE-3
-    def test_defender_reference_v20(self):
+    def test_defender_reference_v20(self):  # KNOWN-ISSUE-3 (đã sửa ở P1-P2)
         cfg = lan_cfg(defender={"RealTimeProtectionEnabled": False, "AntivirusSignatureAge": 0},
                       security_center={"antivirus": [{"displayName": "Windows Defender",
                                                       "productState": 393472}], "firewall": []})
@@ -83,8 +81,7 @@ class ConfigReferences(unittest.TestCase):
         self.assertEqual([a.mitre.split()[0] for a in alerts if a.pillar == "CONFIRMED_WEAKNESS"],
                          ["T1685"])
 
-    @unittest.expectedFailure  # KNOWN-ISSUE-2
-    def test_uac_has_no_direct_attack_mapping(self):
+    def test_uac_has_no_direct_attack_mapping(self):  # KNOWN-ISSUE-2 (đã sửa ở P1-P2)
         alerts = config_audit.detect(lan_cfg(uac_enabled=False), profile="WINGUARD_LAB")
         uac = [a for a in alerts if a.root_cause == "uac"]
         self.assertEqual(len(uac), 1)
