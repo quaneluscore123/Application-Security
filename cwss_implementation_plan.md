@@ -537,9 +537,13 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 | P7 | `python -m unittest discover -s tests -t . -v` | 172 test: 172 đạt, 0 lỗi | `reporter.build_report` dùng chung cho console/HTML/`alerts.json`; `tests/spec/test_consistency.py` (12 kiểm tra §12 + nội dung báo cáo). Chạy thử trên máy lab (không Admin, baseline cũ 27/10): 2 `CONFIRMED_WEAKNESS` (CWSS 25.0 / 25.0), Posture 72.5, 3 Scheduled Task "SoftLanding" mới của Windows so với baseline cũ (báo động do baseline lệch, có từ trước), Legacy 60 |
 | 28/10/2026 | P8 (phần chạy được) | `python -m unittest discover -s tests -t . -v`; `python -m compileall`; `python -m winguard --help` | 172 test: 172 đạt, 0 lỗi, 0 `expectedFailure`; biên dịch OK | README cập nhật (ba trụ cột, ATT&CK v20.0, `--profile`, kiểm thử) |
 | 28/10/2026 | P8 | `python -m simulator.benchmark --runs 1` (không Admin) | **Không chạy được** — thoát mã 1: "Cần chạy terminal bằng quyền Administrator" | Benchmark sau thay đổi phải do nhóm chạy bằng Admin |
+| 28/10/2026 01:00–01:04 | `48d0e8b` (nhánh `feature/v7.2-cwss`) | `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` (Admin, nhóm chạy) | 18/18 lần phát hiện (6 kịch bản × 3, mã ATT&CK v20.0); 0 cảnh báo sự kiện sau 3 lần quét sạch; spraying: v1 0/3, v2 3/3; `benchmark.json` ghi `attack_version = Enterprise v20.0` | Không regression so với mốc `80fa1c1` (27/10: 18/18, 0, 0/3 vs 3/3). Chỉ áp dụng cho 6 kịch bản tự mô phỏng trên một máy |
+| 28/10/2026 | `48d0e8b` | `python -m winguard --baseline` (Admin, nhóm chạy) | Baseline mới đã ký HMAC; Posture 72.5; Legacy 84/100; 2 `CONFIRMED_WEAKNESS` (lockout = 10, min password = 0, CWSS 25.0 mỗi mục), 1 `NEEDS_REVIEW` (`HP` PasswordRequired=False), 0 `ATTACK_OBSERVED` | Thay baseline 27/10 (hết 3 cảnh báo Scheduled Task "SoftLanding" do baseline lệch) |
+| 28/10/2026 | — | Kiểm tra thủ công CWSS (§3.2a) | Nhóm báo "MATCH" toàn bộ; **chưa đủ hồ sơ**: thiếu tên người kiểm tra, ngày, giá trị BI trong vector Example 4.1, mã Unknown của AV, ảnh chụp | `CWSS_MANUAL_CHECK` giữ `PENDING` cho tới khi đủ hồ sơ (QĐ2) |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
-**Test chưa chạy được và lý do (cập nhật 28/10/2026):** (1) benchmark sau thay đổi — cần quyền Administrator, AI không có; nhóm chạy `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` → `toolsestore.ps1` và ghi kết quả vào bảng trên; (2) kiểm tra thủ công CWSS — chưa có người thực hiện (§3.2a); (3) các kịch bản tay (sửa baseline, Event 1102) với quyền Admin — chưa chạy lại sau thay đổi.
+**Test chưa chạy được và lý do (cập nhật 28/10/2026):** (1) ~~benchmark sau thay đổi~~ — **đã chạy 28/10/2026 01:00 (xem bảng)**; trước đó: cần quyền Administrator, AI không có; nhóm chạy `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` → `tools
+estore.ps1` và ghi kết quả vào bảng trên; (2) kiểm tra thủ công CWSS — chưa có người thực hiện (§3.2a); (3) các kịch bản tay (sửa baseline, Event 1102) với quyền Admin — chưa chạy lại sau thay đổi.
 
 ### 14.1. Lỗi đã biết
 
@@ -595,7 +599,7 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§11 Posture (P6):** `posture.py`; `tests/spec/test_posture.py`.
 - [x] **§12 Nhất quán (P7):** `tests/spec/test_consistency.py` — 12 kiểm tra.
 - [x] **§13.3 Báo cáo (P7):** console/HTML/JSON từ một `build_report`, hiển thị ATT&CK v20.0, profile + ngưỡng, ba trụ cột, bằng chứng, hệ số, nhãn nội bộ, trạng thái kiểm tra thủ công CWSS.
-- [ ] **§13.1–13.2 Test + benchmark (P8):** unit test xong (172/172); **còn benchmark Admin**.
+- [x] **§13.1–13.2 Test + benchmark (P8):** unit test 172/172; benchmark Admin 28/10/2026 (18/18, 0 cảnh báo quét sạch, spraying v1 0/3 – v2 3/3) tại `48d0e8b`.
 - [ ] **P8 đồng bộ tài liệu:** README xong; **còn báo cáo (Claude Doc) và slide** (T1070.001 → T1685.005, bỏ T1548.002 khỏi UAC, ba trụ cột, số liệu benchmark mới) — làm sau khi có benchmark.
 
 ---
