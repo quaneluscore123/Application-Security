@@ -14,5 +14,5 @@ def detect(cfg: dict) -> list[Alert]:
             "Collector lỗi hoặc trả về rỗng; không thể kết luận trạng thái mục này.",
             "Chạy lại bằng quyền Administrator; kiểm tra PowerShell và dịch vụ liên quan.",
             category="config", pillar=NEEDS_REVIEW, root_cause="COLLECTOR_ERROR",
-            evidence={"collector": name}))
+            evidence={"collector": name, "review_code": "COLLECTOR_ERROR"}))
     return alerts

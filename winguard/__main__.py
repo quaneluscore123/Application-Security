@@ -8,7 +8,7 @@ import argparse
 import sys
 from datetime import datetime, timedelta
 
-from winguard import integrity, profiles, reporter, scoring
+from winguard import integrity, priority, profiles, reporter, scoring
 from winguard.collectors import config, eventlog
 from winguard.detectors import (accounts, bruteforce, collector_health, config_audit,
                                 evasion, persistence)
@@ -44,7 +44,7 @@ def analyze(hours: int | None, include_events: bool = True,
     if new_rules:
         alerts += collector_health.detect(cfg)  # collector lỗi -> UNKNOWN (cả baseline lẫn scan)
     if not include_events:
-        return cfg, alerts
+        return cfg, priority.assign(alerts)
     events = []
     if is_admin():
         since = since or scan_start(hours)
@@ -61,7 +61,7 @@ def analyze(hours: int | None, include_events: bool = True,
     baseline_cfg = baseline["config"] if baseline else None
     alerts += accounts.detect(events, cfg, baseline_cfg)
     alerts += persistence.detect(events, cfg, baseline_cfg)
-    return cfg, alerts
+    return cfg, priority.assign(alerts)
 
 
 def save_baseline(cfg: dict, score: int) -> None:

@@ -413,7 +413,10 @@ $$\text{Priority} = 100 \times \text{OperationalImpact} \times \text{Uncertainty
 | `SCORING_ERROR` | 0.60 | 1.0 | 60.0 |
 | Collector lỗi | 0.50 | 1.0 | 50.0 |
 | Profile ngưỡng chưa xác định / NetworkCategory lạ | 0.50 | 1.0 | 50.0 |
+| Không đủ dữ liệu để kết luận (mã chung) | 0.50 | 1.0 | 50.0 |
+| Chữ ký Defender cũ (bổ sung ở P2/P6) | 0.40 | 1.0 | 40.0 |
 | Profile firewall tắt nhưng không active | 0.30 | 1.0 | 30.0 |
+| Có sản phẩm bảo vệ khác thay thế (bổ sung ở P4/P6) | 0.20 | 1.0 | 20.0 |
 
 Quy tắc nội bộ, chưa hiệu chỉnh thực nghiệm. **Không phải điểm MITRE.**
 
@@ -530,6 +533,7 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 | P3 | `python -m unittest discover -s tests -t . -v` | 83 test: 79 đạt, 4 `expectedFailure`, 0 lỗi | `cwss_weights.py` (trạng thái `PENDING`), `cwss.py`, `cwss_vectors.py`. Ví dụ 4.2 khớp 51.1; 4.1 ghi nhận mâu thuẫn. Chạy thử trên máy lab: lockout = 10 → CWSS 25.0 (IC = L), min password = 0 → 25.0 |
 | 28/10/2026 | P4 | `python -m unittest discover -s tests -t . -v` | 118 test: 118 đạt, 0 `expectedFailure`, 0 lỗi | Collector `network_profiles`, `security_center`, `PasswordRequired`, `_status`; `Computer`/`EventRecordID`; profile `--profile`. KNOWN-ISSUE-4…7 sửa xong; 8 test `tests/current` (ConfigAudit, parser) cập nhật có chủ đích. Chạy thử máy lab (không Admin): SecurityCenter2 đọc được không cần Admin (Windows Defender, không có firewall khác); 4 kết nối (ZeroTier ×2, Radmin VPN = Public; Wi-Fi = Private), `NetworkCategory` trả về dạng số nếu không đổi sang tên; Legacy Score 84 (LAB), tài khoản `HP` có `PasswordRequired=False` → `NEEDS_REVIEW` |
 | 28/10/2026 | P5 | `python -m unittest discover -s tests -t . -v` | 144 test: 144 đạt, 0 lỗi | `winguard/incident.py`, `winguard/correlation.py`, `accounts.py` viết lại (tương quan, mâu thuẫn, allowlist), điểm cho brute force/spraying/1102/persistence. 1 test `tests/current` (fixture Administrators) cập nhật có chủ đích |
+| 28/10/2026 | P6 | `python -m unittest discover -s tests -t . -v` | 157 test: 157 đạt, 0 lỗi | `winguard/priority.py` (gắn cho mọi mục `NEEDS_REVIEW` trong `analyze`), `winguard/posture.py` (gom cụm theo `root_cause`, `SCORING_ERROR` → Posture không xác định) |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
 **Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
@@ -584,7 +588,9 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§5 Incident Severity (P5):** `incident.py` (miền, half-up, không ép 100, breakdown T/C/W); `tests/spec/test_incident_severity.py`.
 - [x] **§6 Gom cụm (P5):** `correlation.py` (asset, SID, cửa sổ 300 s, sai thứ tự, trùng, thiếu SID); `tests/spec/test_clustering.py`.
 - [x] **§7 Allowlist (P5):** `alert_required` tách khỏi điểm; `tests/spec/test_allowlist.py` (6 ca).
-- [ ] **§10 Priority**, **§11 Posture**, **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
+- [x] **§10 Priority (P6):** `priority.py`, mã lý do `review_code`; `tests/spec/test_posture.py`.
+- [x] **§11 Posture (P6):** `posture.py`; `tests/spec/test_posture.py`.
+- [ ] **§12 Nhất quán**, **§13 Test/benchmark/báo cáo**: chưa triển khai.
 
 ---
 
