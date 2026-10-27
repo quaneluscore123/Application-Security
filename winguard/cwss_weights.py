@@ -7,8 +7,8 @@ người thật mở trang gốc, đối chiếu theo checklist §3.2a và đi�
 CWSS_SOURCE = "https://cwe.mitre.org/cwss/cwss_v1.0.1.html"
 CWSS_EXTRACTED = {"by": "AI (công cụ đọc web)", "date": "2026-10-28"}
 
-# Kết quả do người kiểm tra báo lại (AI chỉ ghi chép, không tự kiểm tra). Trạng thái chung giữ
-# PENDING cho tới khi đủ hồ sơ: còn thiếu ảnh chụp và mã Unknown của AV (xem "notes").
+# Kết quả do người kiểm tra báo lại (AI chỉ ghi chép, không tự kiểm tra). Ảnh trong docs/audit/ do người
+# kiểm tra chụp. Trạng thái chung giữ PENDING cho tới khi đủ hồ sơ (còn thiếu ảnh Example 4.1).
 CWSS_MANUAL_CHECK = {
     "status": "PENDING",        # PENDING | VERIFIED | DISCREPANCY
     "reviewer": "Hoàng Minh Quân",
@@ -26,15 +26,19 @@ CWSS_MANUAL_CHECK = {
     },
     "example_4_2": {
         "status": "MATCH",
-        "vector_as_published": "PENDING",
+        "vector_as_published": "(TI:M,0.6/AP:A,1.0/AL:A,1.0/IC:N,1.0/FC:T,1.0/RP:RU,0.7/RL:A,1.0/AV:I,1.0/"
+                               "AS:W,0.9/IN:A,1.0/SC:NA,1.0/BI:L,0.3/DI:NA,1.0/EX:NA,1.0/EC:N,1.0/RE:NA,1.0/"
+                               "P:NA,1.0)",
         "base": 84.0, "attack_surface": 0.935, "environmental": 0.65, "score": 51.1,
-        "re_handling": "PENDING",
-        "screenshot": "PENDING",
+        "re_handling": "Phần ví dụ 4.2 không giải thích RE:NA; RE không thuộc 16 metric nên parser bỏ qua",
+        "screenshot": "docs/audit/cwss_example_4_2.png",
     },
-    "weight_table_screenshots": [],
+    "weight_table_screenshots": ["docs/audit/cwss_weights_av.png", "docs/audit/cwss_weights_ti.png"],
     "notes": "Ví dụ 4.1: vector in BI:C,0.9 nhưng bảng trọng số ghi C = 1.0 và Environmental = 1.0, "
              "điểm 92.6 chỉ đúng với BI = 1.0 (với 0.9: Env 0.95, điểm 88.0). "
-             "Còn thiếu: ảnh chụp (docs/audit/), mã Unknown của AV (U hay UK), vector nguyên văn ví dụ 4.2.",
+             "Mã Unknown của AV là U (khác UK của các metric khác) - đã xác nhận bằng ảnh "
+             "docs/audit/cwss_weights_av.png. Ảnh bảng trọng số mới có AV và TI. "
+             "Còn thiếu: ảnh Example 4.1 (docs/audit/cwss_example_4_1.png).",
 }
 
 # metric -> {mã: trọng số}. "Q" (Quantified) không hỗ trợ.
@@ -46,7 +50,7 @@ WEIGHTS = {
     "FC": {"T": 1.0, "LT": 0.8, "F": 0.0, "D": 0.8, "UK": 0.5, "NA": 1.0},
     "RP": {"N": 1.0, "L": 0.9, "RU": 0.7, "P": 0.6, "A": 0.1, "D": 0.7, "UK": 0.5, "NA": 1.0},
     "RL": {"A": 1.0, "S": 0.9, "N": 0.7, "E": 1.0, "D": 0.9, "UK": 0.5, "NA": 1.0},
-    # Bản trích ghi mã Unknown của AV là "U" (không phải "UK") — chờ kiểm tra thủ công
+    # Mã Unknown của AV là "U" (không phải "UK") - người kiểm tra xác nhận, ảnh docs/audit/cwss_weights_av.png
     "AV": {"I": 1.0, "R": 0.8, "V": 0.8, "A": 0.7, "L": 0.5, "P": 0.2, "D": 0.75, "U": 0.5, "NA": 1.0},
     "AS": {"S": 0.7, "M": 0.8, "W": 0.9, "N": 1.0, "D": 0.85, "UK": 0.5, "NA": 1.0},
     "IN": {"A": 1.0, "T": 0.9, "M": 0.8, "O": 0.3, "H": 0.1, "NI": 0.0, "D": 0.55, "UK": 0.5, "NA": 1.0},

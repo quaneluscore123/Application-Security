@@ -96,7 +96,7 @@ class Parser(unittest.TestCase):
         with self.assertRaises(ValueError):
             cwss.parse(ALL_NA.replace("TI:NA", "TI:Q"))
 
-    def test_av_unknown_code_is_U(self):
+    def test_av_unknown_code_is_U(self):  # xác nhận bằng ảnh docs/audit/cwss_weights_av.png
         self.assertEqual(cwss.parse(ALL_NA.replace("AV:NA", "AV:U"))["AV"], "U")
         with self.assertRaises(ValueError):
             cwss.parse(ALL_NA.replace("AV:NA", "AV:UK"))
@@ -115,6 +115,18 @@ class ManualCheck(unittest.TestCase):
                     "example_4_2", "weight_table_screenshots", "notes"):
             self.assertIn(key, CWSS_MANUAL_CHECK)
         self.assertTrue(CWSS_MANUAL_CHECK["reviewer"])
+
+    def test_recorded_screenshots_exist(self):
+        from winguard.utils import ROOT
+        shots = CWSS_MANUAL_CHECK["weight_table_screenshots"] + [
+            CWSS_MANUAL_CHECK[ex]["screenshot"] for ex in ("example_4_1", "example_4_2")]
+        for shot in shots:
+            if shot != "PENDING":
+                self.assertTrue((ROOT / shot).exists(), shot)
+
+    def test_example_4_2_vector_as_published_matches_standard(self):
+        published = CWSS_MANUAL_CHECK["example_4_2"]["vector_as_published"]
+        self.assertEqual(cwss.parse(published), cwss.parse(EXAMPLES["4.2"]["vector"]))
 
     def test_verified_requires_evidence(self):
         fake = {**CWSS_MANUAL_CHECK, "status": "VERIFIED"}
