@@ -1,7 +1,7 @@
 # Đặc tả Thiết kế & Kế hoạch Triển khai: Hệ thống Đánh giá Bảo mật WinGuard
 *(Phiên bản v7.2 — bản sửa 1: Chốt ATT&CK Enterprise v20.0, tách luồng Bằng chứng → Trạng thái → CWE → CWSS, làm rõ phạm vi áp dụng CWSS, nâng độ tin cậy collector Firewall, bổ sung test nhất quán; chốt 3 quyết định: bỏ T1548.002 khỏi cảnh báo UAC, bắt buộc kiểm tra CWSS thủ công bởi người, giữ thứ tự P0 → P8)*
 
-> **Trạng thái tài liệu:** KẾ HOẠCH — **chưa sửa code**. Theo yêu cầu của nhóm, code chỉ được sửa sau khi bản kế hoạch này được duyệt.
+> **Trạng thái tài liệu:** ĐANG TRIỂN KHAI trên nhánh `feature/v7.2-cwss` (kế hoạch đã được duyệt ngày 28/10/2026). P0–P7 xong; **P8 chưa hoàn tất** (chờ benchmark quyền Admin, kiểm tra thủ công CWSS, cập nhật báo cáo/slide) — xem §14–§15.
 > **Mốc repository rà soát:** commit `80fa1c1` (nhánh `main`).
 > **Ngày rà soát nguồn ngoài:** 28/10/2026.
 > Hạng mục chỉ được đánh dấu hoàn tất theo §14.
@@ -535,9 +535,11 @@ Một hạng mục chỉ `[x]` khi: (1) code + tài liệu đồng bộ; (2) có
 | 28/10/2026 | P5 | `python -m unittest discover -s tests -t . -v` | 144 test: 144 đạt, 0 lỗi | `winguard/incident.py`, `winguard/correlation.py`, `accounts.py` viết lại (tương quan, mâu thuẫn, allowlist), điểm cho brute force/spraying/1102/persistence. 1 test `tests/current` (fixture Administrators) cập nhật có chủ đích |
 | 28/10/2026 | P6 | `python -m unittest discover -s tests -t . -v` | 157 test: 157 đạt, 0 lỗi | `winguard/priority.py` (gắn cho mọi mục `NEEDS_REVIEW` trong `analyze`), `winguard/posture.py` (gom cụm theo `root_cause`, `SCORING_ERROR` → Posture không xác định) |
 | 28/10/2026 | P7 | `python -m unittest discover -s tests -t . -v` | 172 test: 172 đạt, 0 lỗi | `reporter.build_report` dùng chung cho console/HTML/`alerts.json`; `tests/spec/test_consistency.py` (12 kiểm tra §12 + nội dung báo cáo). Chạy thử trên máy lab (không Admin, baseline cũ 27/10): 2 `CONFIRMED_WEAKNESS` (CWSS 25.0 / 25.0), Posture 72.5, 3 Scheduled Task "SoftLanding" mới của Windows so với baseline cũ (báo động do baseline lệch, có từ trước), Legacy 60 |
+| 28/10/2026 | P8 (phần chạy được) | `python -m unittest discover -s tests -t . -v`; `python -m compileall`; `python -m winguard --help` | 172 test: 172 đạt, 0 lỗi, 0 `expectedFailure`; biên dịch OK | README cập nhật (ba trụ cột, ATT&CK v20.0, `--profile`, kiểm thử) |
+| 28/10/2026 | P8 | `python -m simulator.benchmark --runs 1` (không Admin) | **Không chạy được** — thoát mã 1: "Cần chạy terminal bằng quyền Administrator" | Benchmark sau thay đổi phải do nhóm chạy bằng Admin |
 | — | — | Kiểm tra thủ công CWSS (§3.2a) | **PENDING** — chưa có người kiểm tra | AI đã trích nguồn ngày 28/10/2026; không tính là kiểm tra thủ công |
 
-**Test chưa chạy được và lý do:** toàn bộ unit test (chưa viết — chờ duyệt kế hoạch); benchmark sau thay đổi (chưa đổi code); đọc `SecurityCenter2` trên máy lab (cần chạy thử); kiểm tra thủ công CWSS (chưa có người thực hiện).
+**Test chưa chạy được và lý do (cập nhật 28/10/2026):** (1) benchmark sau thay đổi — cần quyền Administrator, AI không có; nhóm chạy `tools\prepare.ps1` → `python -m simulator.benchmark --runs 3` → `toolsestore.ps1` và ghi kết quả vào bảng trên; (2) kiểm tra thủ công CWSS — chưa có người thực hiện (§3.2a); (3) các kịch bản tay (sửa baseline, Event 1102) với quyền Admin — chưa chạy lại sau thay đổi.
 
 ### 14.1. Lỗi đã biết
 
@@ -593,7 +595,8 @@ Mỗi bước sau P0: có test tương ứng + chạy lại toàn bộ `tests/cu
 - [x] **§11 Posture (P6):** `posture.py`; `tests/spec/test_posture.py`.
 - [x] **§12 Nhất quán (P7):** `tests/spec/test_consistency.py` — 12 kiểm tra.
 - [x] **§13.3 Báo cáo (P7):** console/HTML/JSON từ một `build_report`, hiển thị ATT&CK v20.0, profile + ngưỡng, ba trụ cột, bằng chứng, hệ số, nhãn nội bộ, trạng thái kiểm tra thủ công CWSS.
-- [ ] **§13.1–13.2 Test + benchmark (P8):** xem §14.
+- [ ] **§13.1–13.2 Test + benchmark (P8):** unit test xong (172/172); **còn benchmark Admin**.
+- [ ] **P8 đồng bộ tài liệu:** README xong; **còn báo cáo (Claude Doc) và slide** (T1070.001 → T1685.005, bỏ T1548.002 khỏi UAC, ba trụ cột, số liệu benchmark mới) — làm sau khi có benchmark.
 
 ---
 
